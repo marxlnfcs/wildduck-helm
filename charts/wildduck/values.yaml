@@ -1,0 +1,571 @@
+##
+## @section Global parameters
+##
+
+## @param global.imageRegistry - Global Docker image registry
+## @param global.imagePullSecrets - Global Docker registry secret names as an array
+##
+global:
+  ## E.g.
+  ## imagePullSecrets:
+  ##   - myRegistryKeySecretName
+  ##
+  imagePullSecrets: []
+  storageClass: ""
+
+##
+## @section Common parameters
+##
+
+## @param nameOverride - String to partially override common.names.fullname template (will maintain the release name)
+##
+nameOverride: ""
+## @param fullnameOverride - String to fully override common.names.fullname template with a string
+##
+fullnameOverride: ""
+## @param clusterDomain - Kubernetes Cluster Domain
+##
+clusterDomain: cluster.local
+## @param commonLabels - Add labels to all the deployed resources
+##
+commonLabels: {}
+## @param commonAnnotations - Add annotations to all the deployed resources
+##
+commonAnnotations: {}
+
+## @param common - Common options for the chart
+##
+common:
+  ## @param common.domain - Defines the domain for the mailserver and its components
+  ##
+  baseDomain: "example.com"
+
+  ## @param common.wildduck - Common wildduck configurations
+  ##
+  wildduck:
+    accessToken: "chang3m3!"
+
+  ## @param common.additionalAccounts - Creates all accounts and its domain if not exists
+  ## Example:
+  ##
+  ## additionalAccounts:
+  ##    - domain: "example.com"
+  ##      username: "max.mustermann"
+  ##      password: "chang3m3!"
+  ##
+  additionalAccounts: []
+
+  ## @param common.databases - Database information for each component
+  ## Setting the username and password is optional. If no username or password is used, the default username and password from mongo.* and redis.* will be used.
+  database:
+    mongo:
+      wildduck:
+        database: "wildduck"
+        username: "wildduck"
+        password: "sup3r-s3cr3t-password"
+      wildduck_test:
+        database: "wildduck-test"
+        username: "wildduck-test"
+        password: "sup3r-s3cr3t-password"
+      webmail:
+        database: "webmail"
+        username: "webmail"
+        password: "sup3r-s3cr3t-password"
+      zone-mta:
+        database: "zone-mta"
+        username: "zone-mta"
+        password: "sup3r-s3cr3t-password"
+    redis:
+      wildduck:
+        database: 3
+        username: "" # Only used if redis.external.enabled is true
+        password: "sup3r-s3cr3t-password" # Only used if redis.external.enabled is true
+      wildduck_test:
+        database: 13
+        username: "" # Only used if redis.external.enabled is true
+        password: "sup3r-s3cr3t-password" # Only used if redis.external.enabled is true
+      webmail:
+        database: 5
+        username: "" # Only used if redis.external.enabled is true
+        password: "sup3r-s3cr3t-password" # Only used if redis.external.enabled is true
+      rspamd:
+        database: 4
+        username: "" # Only used if redis.external.enabled is true
+        password: "sup3r-s3cr3t-password" # Only used if redis.external.enabled is true
+      zone-mta:
+        database: 2
+        username: "" # Only used if redis.external.enabled is true
+        password: "sup3r-s3cr3t-password" # Only used if redis.external.enabled is true
+
+## @param tls - Defines the certificate to use for all deployments
+## Defines if the chart should automatically create a certificate for every deployment who needs it
+##
+tls:
+  certManager:
+    enabled: true
+    issuer: "letsencrypt-staging"
+    kind: "ClusterIssuer" # Issuer or ClusterIssuer
+  selfSigned: false
+  existingSecretName: ""
+
+## @param nginx - Defines information about a custom nginx controller
+## If enabled, this chart will deploy a nginx controller for mapping the enabled services
+## into the hostNetwork
+nginx:
+  enabled: true
+  services:
+    smtp_outbound: true # ZoneMTA (Outbound SMTP)
+    smtp_inbound: true # Haraka (Inbound SMTP)
+    imap: true # Wildduck (IMAP)
+    pop3: true # Wildduck (POP3)
+
+  ## @param nginx.image - Image configuration
+  ##
+  image:
+    name: nginx:latest
+    pullPolicy: IfNotPresent
+
+## @param serviceAccount - Service account configurations
+serviceAccount:
+  wildduck:
+    ## @param serviceAccount.wildduck.create Specifies whether a service account should be created
+    create: true
+    ## @param serviceAccount.wildduck.annotations Annotations to add to the service account
+    annotations: {}
+    ## @param serviceAccount.wildduck.name The name of the service account to use
+    ## If not set and create is true, a name is generated using the fullname template
+    name: ""
+  webmail:
+    ## @param serviceAccount.webmail.create Specifies whether a service account should be created
+    create: true
+    ## @param serviceAccount.webmail.annotations Annotations to add to the service account
+    annotations: {}
+    ## @param serviceAccount.webmail.name The name of the service account to use
+    ## If not set and create is true, a name is generated using the fullname template
+    name: ""
+  haraka:
+    ## @param serviceAccount.haraka.create Specifies whether a service account should be created
+    create: true
+    ## @param serviceAccount.haraka.annotations Annotations to add to the service account
+    annotations: { }
+    ## @param serviceAccount.haraka.name The name of the service account to use
+    ## If not set and create is true, a name is generated using the fullname template
+    name: ""
+  rspamd:
+    ## @param serviceAccount.rspamd.create Specifies whether a service account should be created
+    create: true
+    ## @param serviceAccount.rspamd.annotations Annotations to add to the service account
+    annotations: { }
+    ## @param serviceAccount.rspamd.name The name of the service account to use
+    ## If not set and create is true, a name is generated using the fullname template
+    name: ""
+  zonemta:
+    ## @param serviceAccount.zonemta.create Specifies whether a service account should be created
+    create: true
+    ## @param serviceAccount.zonemta.annotations Annotations to add to the service account
+    annotations: {}
+    ## @param serviceAccount.zonemta.name The name of the service account to use
+    ## If not set and create is true, a name is generated using the fullname template
+    name: ""
+  nginx:
+    ## @param serviceAccount.wildduck.create Specifies whether a service account should be created
+    create: true
+    ## @param serviceAccount.wildduck.annotations Annotations to add to the service account
+    annotations: {}
+    ## @param serviceAccount.wildduck.name The name of the service account to use
+    ## If not set and create is true, a name is generated using the fullname template
+    name: ""
+  mongo:
+    ## @param serviceAccount.mongo.create Specifies whether a service account should be created
+    create: true
+    ## @param serviceAccount.mongo.annotations Annotations to add to the service account
+    annotations: {}
+    ## @param serviceAccount.mongo.name The name of the service account to use
+    ## If not set and create is true, a name is generated using the fullname template
+    name: ""
+  redis:
+    ## @param serviceAccount.redis.create Specifies whether a service account should be created
+    create: true
+    ## @param serviceAccount.redis.annotations Annotations to add to the service account
+    annotations: {}
+    ## @param serviceAccount.redis.name The name of the service account to use
+    ## If not set and create is true, a name is generated using the fullname template
+    name: ""
+
+## @param wildduck - Wildduck configuration
+wildduck:
+
+  ## @param wildduck.replicaCount - Replicas to deploy
+  ##
+  replicaCount: 1
+
+  ## @param wildduck.image - Image configuration
+  ##
+  image:
+    name: nodemailer/wildduck:v1.34.0
+    pullPolicy: IfNotPresent
+
+  ## @param wildduck.service - Service configuration
+  ##
+  service:
+    name: ""
+    type: ClusterIP
+    ports:
+      http: 80
+      imap: 143
+      pop3: 110
+
+  ## @param wildduck.ingress - Ingress configuration for the wildduck api
+  ##
+  ingress:
+    ## @param wildduck.ingress.enabled - Set to true to enable ingress record generation
+    ##
+    enabled: true
+    ## @param wildduck.ingress.selfSigned - Create a TLS secret for this ingress record using self-signed certificates generated by helm
+    ##
+    selfSigned: false
+    ## @param wildduck.ingress.pathType - Ingress path type
+    ##
+    pathType: ImplementationSpecific
+    ## @param wildduck.ingress.hostname - Default host for the ingress resource
+    ## The default value is api.{{.Values.common.domain}}
+    ##
+    hostname: ""
+    ## @param wildduck.ingress.path - The Path to Nginx. You may need to set this to '/*' in order to use this with ALB ingress controllers.
+    path: /
+    ## @param wildduck.ingress.annotations - Additional annotations for the Ingress resource. To enable certificate autogeneration, place here your cert-manager annotations.
+    ##
+    annotations: {}
+    ## @param ingress.ingressClassName Set the ingressClassName on the ingress record for k8s 1.18+
+    ## This is supported in Kubernetes 1.18+ and required if you have more than one IngressClass marked as the default for your cluster .
+    ## ref: https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/
+    ##
+    ingressClassName: ""
+    ## @param ingress.tls Create TLS Secret
+    ## TLS certificates will be retrieved from a TLS secret with name: {{- printf "%s-tls" .Values.wildduck.ingress.hostname }}
+    ## You can use the ingress.secrets parameter to create this TLS secret or relay on cert-manager to create it
+    ##
+    tls: true
+
+  ## Other configurations
+  ##
+  podAnnotations: {}
+  podSecurityContext: {}
+  securityContext: {}
+  resources: {}
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 100
+    targetCPUUtilizationPercentage: 80
+    targetMemoryUtilizationPercentage: 80
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+## @param webmail - Webmail configuration
+##
+webmail:
+
+  ## @param webmail.service - Enables/Disables the webmail component
+  ##
+  enabled: false
+
+  ## @param webmail.replicaCount - Replicas to deploy
+  ##
+  replicaCount: 1
+
+  ## @param webmail.image - Image configuration
+  ##
+  image:
+    name: nodemailer/wildduck-webmail
+    pullPolicy: IfNotPresent
+
+  ## @param webmail.service - Service configuration
+  ##
+  service: 
+    name: ""
+    type: ClusterIP
+    ports:
+      http: 80
+
+  ## @param webmail.ingress - Ingress configuration
+  ##
+  ingress:
+    ## @param webmail.ingress.enabled - Set to true to enable ingress record generation
+    ##
+    enabled: true
+    ## @param webmail.ingress.selfSigned - Create a TLS secret for this ingress record using self-signed certificates generated by helm
+    ##
+    selfSigned: false
+    ## @param webmail.ingress.pathType - Ingress path type
+    ##
+    pathType: ImplementationSpecific
+    ## @param webmail.ingress.hostname - Default host for the ingress resource
+    ## Default value is webmail.{{.Values.common.domain}}
+    ##
+    hostname: ""
+    ## @param webmail.ingress.path - The Path to Nginx. You may need to set this to '/*' in order to use this with ALB ingress controllers.
+    path: /
+    ## @param webmail.ingress.annotations - Additional annotations for the Ingress resource. To enable certificate autogeneration, place here your cert-manager annotations.
+    ##
+    annotations: { }
+    ## @param ingress.ingressClassName Set the ingressClassName on the ingress record for k8s 1.18+
+    ## This is supported in Kubernetes 1.18+ and required if you have more than one IngressClass marked as the default for your cluster .
+    ## ref: https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/
+    ##
+    ingressClassName: ""
+    ## @param ingress.tls Create TLS Secret
+    ## TLS certificates will be retrieved from a TLS secret with name: {{- printf "%s-tls" .Values.webmail.ingress.hostname }}
+    ## You can use the ingress.secrets parameter to create this TLS secret or relay on cert-manager to create it
+    ##
+    tls: true
+
+  ## Other configurations
+  ##
+  podAnnotations: {}
+  podSecurityContext: {}
+  securityContext: {}
+  resources: {}
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 100
+    targetCPUUtilizationPercentage: 80
+    targetMemoryUtilizationPercentage: 80
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+## @param zonemta - ZoneMTA (Outbound SMTP) configuration
+##
+zonemta:
+
+  ## @param zonemta.replicaCount Replicas to deploy
+  ##
+  replicaCount: 1
+
+  ## @param zonemta.image Image configuration
+  ##
+  image:
+    name: nodemailer/zonemta-wildduck:latest
+    pullPolicy: IfNotPresent
+
+  ## @param zonemta.service Service configuration
+  ##
+  service:
+    name: ""
+    type: ClusterIP
+    ports:
+      smtp: 587
+
+  ## Other configurations
+  ##
+  podAnnotations: {}
+  podSecurityContext: { }
+  securityContext: { }
+  resources: { }
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 100
+    targetCPUUtilizationPercentage: 80
+    targetMemoryUtilizationPercentage: 80
+  nodeSelector: { }
+  tolerations: [ ]
+  affinity: { }
+
+## @param haraka - Haraka (Inbound SMTP) configuration
+##
+haraka:
+
+  ## @param haraka.replicaCount - Replicas to deploy
+  ##
+  replicaCount: 1
+
+  ## @param haraka.image - Image configuration
+  ##
+  image:
+    name: nodemailer/haraka-wildduck
+    pullPolicy: IfNotPresent
+
+  ## @param haraka.service - Service configuration
+  ##
+  service:
+    name: ""
+    type: ClusterIP
+    ports:
+      smtp: 25
+
+  ## Other configurations
+  ##
+  podAnnotations: {}
+  podSecurityContext: {}
+  securityContext: {}
+  resources: {}
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 100
+    targetCPUUtilizationPercentage: 80
+    targetMemoryUtilizationPercentage: 80
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+## @param rspamd - Rspamd configuration
+##
+rspamd:
+
+  ## @param rspamd.replicaCount - Replicas to deploy
+  ##
+  replicaCount: 1
+
+  ## @param rspamd.image - Image configuration
+  ##
+  image:
+    name: nodemailer/rspamd
+    pullPolicy: IfNotPresent
+
+  ## @param rspamd.service - Service configuration
+  ##
+  service:
+    name: ""
+    type: ClusterIP
+    port: 11333
+
+  ## Other configurations
+  ##
+  podAnnotations: {}
+  podSecurityContext: {}
+  securityContext: {}
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 100
+    targetCPUUtilizationPercentage: 80
+    targetMemoryUtilizationPercentage: 80
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+  # Increase resources
+  # @see https://github.com/bramhoven/wildduck-k8s/issues/16#issuecomment-1412931513
+  resources:
+    limits:
+      cpu: 600m
+      memory: 500Mi
+    requests:
+      cpu: 500m
+      memory: 500Mi
+
+## @param mongo - MongoDB configuration
+##
+mongo:
+
+  ## @param mongo.external - Configuration of an external mongodb database if enabled
+  ## Make sure your user has access to all wildduck databases
+  ##
+  external:
+    ## @param mongo.external.enabled - Defines if the deployment should use an external mongodb database
+    ##
+    enabled: false
+    ## @param mongo.external.host - Hostname of the external database
+    ##
+    host: ""
+    ## @param mongo.external.port - Port of the external database
+    ##
+    port: 27017
+    ## @param mongo.external.username - Username of the external database
+    ##
+    username: ""
+    ## @param mongo.external.password - Password of the external database
+    ##
+    password: ""
+
+  ## @param mongo.username
+  ## @param mongo.password
+  ##
+  username: "wildduck"
+  password: "sup3r-s3cr3t-password"
+
+  ## @param mongo.persistence - Persistence configuration
+  ##
+  persistence:
+    enabled: true
+    existingClaim: ""
+    storageClass: ""
+    accessModes:
+      - ReadWriteOnce
+    size: 8Gi
+
+  ## @param mongo.service - Configuration of the mongodb service
+  ##
+  service:
+    name: ""
+    type: ClusterIP
+    port: "27017"
+
+  ## Other configurations
+  ##
+  podAnnotations: {}
+  podSecurityContext: {}
+  securityContext: {}
+  resources: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+## @param redis - Redis configuration
+##
+redis:
+
+  ## @param redis.external - Configuration of an external redis database if enabled
+  ##
+  external:
+    ## @param redis.external.enabled - Defines if the deployment should use an external redis database
+    ##
+    enabled: false
+    ## @param redis.external.host - Hostname of the external database
+    ##
+    host: ""
+    ## @param redis.external.port - Port of the external database
+    ##
+    port: "6379"
+    ## @param redis.external.username - Username of the external database
+    ##
+    username: ""
+    ## @param redis.external.password - Password of the external database
+    ##
+    password: ""
+
+  ## @param redis.password
+  ##
+  password: "sup3r-s3cr3t-password"
+
+  ## @param redis.persistence - Persistence configuration
+  ##
+  persistence:
+    enabled: true
+    existingClaim: ""
+    storageClass: ""
+    accessModes:
+      - ReadWriteOnce
+    size: 8Gi
+
+  ## @param redis.service - Configuration of the redis service
+  ##
+  service:
+    name: ""
+    type: ClusterIP
+    port: "6379"
+
+  ## Other configurations
+  ##
+  podAnnotations: {}
+  podSecurityContext: {}
+  securityContext: {}
+  resources: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}

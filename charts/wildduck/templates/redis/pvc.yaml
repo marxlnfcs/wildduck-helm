@@ -1,0 +1,23 @@
+{{- if and (not .Values.redis.external.enabled) (.Values.redis.persistence.enabled) (not .Values.redis.persistence.existingClaim) }}
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: {{ include "redis.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels: {{- include "redis.labels" . | nindent 4 }}
+  annotations:
+    {{- if .Values.commonAnnotations }}
+    {{ toYaml .Values.commonAnnotations | nindent 4 }}
+    {{- end }}
+spec:
+  {{- if .Values.redis.persistence.storageClass }}
+  storageClassName: "{{ .Values.redis.persistence.storageClass }}"
+  {{- end }}
+  accessModes:
+  {{- range .Values.redis.persistence.accessModes }}
+    - {{ . | quote }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.redis.persistence.size | quote }}
+{{- end }}

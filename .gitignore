@@ -1,0 +1,5 @@
+.kubeconfig.yaml
+node_modules/
+.idea/
+package.json
+package-lock.json

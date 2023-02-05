@@ -1,0 +1,67 @@
+{{- if and (not .Values.tls.existingSecretName) (not .Values.tls.selfSigned) (.Values.tls.certManager.enabled) }}
+##
+# TLS Certificate from CertManager
+##
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: "{{ include "tls.name.baseDomain" . }}"
+  namespace: "{{ .Release.Namespace }}"
+  labels: {{-  include "common.labels.standard" . | nindent 4 }}
+  annotations:
+    {{- if .Values.commonAnnotations }}
+    {{ toYaml .Values.commonAnnotations | nindent 4 }}
+    {{- end }}
+spec:
+  secretName: "{{ include "tls.name.baseDomain" . }}"
+  dnsNames: ["{{ .Values.common.baseDomain }}"]
+  issuerRef:
+    name: "{{ default "letsencrypt" .Values.tls.certManager.issuer }}"
+    kind: "{{ default "Issuer" .Values.tls.certManager.kind }}"
+    group: "cert-manager.io"
+
+
+{{- else if and (not .Values.tls.existingSecretName) (.Values.tls.selfSigned) }}
+##
+# TLS Self signed certificate from Helm
+##
+{{- $ca := genCA (printf "%s-ca" (.Values.common.baseDomain | replace "." "-" | trim)) 365 }}
+{{- $cert := genSignedCert (.Values.common.baseDomain) (list) (list) 365 $ca }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: "{{ include "tls.name.baseDomain" . }}"
+  namespace: "{{ .Release.Namespace }}"
+  labels: {{-  include "common.labels.standard" . | nindent 4 }}
+  annotations:
+    {{- if .Values.commonAnnotations }}
+    {{ toYaml .Values.commonAnnotations | nindent 4 }}
+    {{- end }}
+type: kubernetes.io/tls
+data:
+  tls.crt: {{ $cert.Cert | b64enc | quote }}
+  tls.key: {{ $cert.Key | b64enc | quote }}
+
+{{- else if and (not .Values.tls.existingSecretName) (not .Values.tls.selfSigned)}}
+##
+# TLS Self signed certificate from Helm
+# Fallback if no secret type is defined (Neither cert-manager, selfSigned nor existingSecretName)
+##
+{{- $ca := genCA (printf "%s-ca" (.Values.common.baseDomain | replace "." "-" | trim)) 365 }}
+{{- $cert := genSignedCert (.Values.common.baseDomain) (list) (list) 365 $ca }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: "{{ include "tls.name.baseDomain" . }}"
+  namespace: "{{ .Release.Namespace }}"
+  labels: {{-  include "common.labels.standard" . | nindent 4 }}
+  annotations:
+    {{- if .Values.commonAnnotations }}
+    {{ toYaml .Values.commonAnnotations | nindent 4 }}
+    {{- end }}
+type: kubernetes.io/tls
+data:
+  tls.crt: {{ $cert.Cert | b64enc | quote }}
+  tls.key: {{ $cert.Key | b64enc | quote }}
+
+{{- end }}

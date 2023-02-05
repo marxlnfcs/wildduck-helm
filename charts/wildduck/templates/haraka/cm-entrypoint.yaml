@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "{{ include "haraka.name" . }}-entrypoint"
+  namespace: "{{ .Release.Namespace }}"
+  labels: {{- include "haraka.labels" . | nindent 4 }}
+  annotations:
+    {{- if .Values.commonAnnotations }}
+    {{ toYaml .Values.commonAnnotations | nindent 4 }}
+    {{- end }}
+data:
+  entrypoint.sh: |-
+    #!/bin/sh
+    apk add openssl
+    node haraka.js

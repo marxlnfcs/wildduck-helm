@@ -1,0 +1,98 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "haraka.name" . }}
+  namespace: "{{ .Release.Namespace }}"
+  labels: {{- include "haraka.labels" . | nindent 4 }}
+  annotations:
+    {{- if .Values.commonAnnotations }}
+    {{ toYaml .Values.commonAnnotations | nindent 4 }}
+    {{- end }}
+spec:
+  {{- if not .Values.haraka.autoscaling.enabled }}
+  replicas: {{ .Values.haraka.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels: {{- include "haraka.labels" . | nindent 6 }}
+  template:
+    metadata:
+      labels: {{- include "haraka.labels" . | nindent 8 }}
+      annotations:
+        checksum/cm-config: "{{ include (print $.Template.BasePath "/haraka/cm-config.yaml") . | sha256sum }}"
+        checksum/cm-dkim: "{{ include (print $.Template.BasePath "/haraka/cm-dkim.yaml") . | sha256sum }}"
+        checksum/cm-entrypoint: "{{ include (print $.Template.BasePath "/haraka/cm-entrypoint.yaml") . | sha256sum }}"
+        {{- if .Values.haraka.podAnnotations }}
+        {{ toYaml .Values.haraka.podAnnotations | nindent 8 }}
+        {{- end }}
+        {{- if .Values.commonAnnotations }}
+        {{ toYaml .Values.commonAnnotations | nindent 8 }}
+        {{- end }}
+    spec:
+      serviceAccountName: "{{ default (include "haraka.name" . ) .Values.serviceAccount.haraka.name }}"
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.haraka.podSecurityContext | nindent 8 }}
+      {{- with .Values.haraka.nodeSelector }}
+      nodeSelector:
+         {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.haraka.affinity }}
+      affinity:
+         {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.haraka.tolerations }}
+      tolerations:
+         {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: haraka
+          securityContext:
+            {{- toYaml .Values.haraka.securityContext | nindent 12 }}
+          image: "{{ .Values.haraka.image.name }}"
+          imagePullPolicy: {{ .Values.haraka.image.pullPolicy }}
+          # install openssl because the current haraka-wildduck image does not install it but the haraka tls plugin needs it.
+          # @see https://github.com/nodemailer/wildduck-dockerized/pull/20
+          command: ["/sbin/tini", "--", "./entrypoint.sh"]
+          ports:
+            - name: smtp
+              containerPort: 25
+              protocol: TCP
+          livenessProbe:
+            tcpSocket:
+              port: smtp
+            initialDelaySeconds: 20
+            periodSeconds: 30
+          readinessProbe:
+            tcpSocket:
+              port: smtp
+            initialDelaySeconds: 20
+            periodSeconds: 30
+          resources:
+            {{- toYaml .Values.haraka.resources | nindent 12 }}
+          volumeMounts:
+            - name: entrypoint
+              mountPath: /app/entrypoint.sh
+              subPath: entrypoint.sh
+            - name: config
+              mountPath: /app/config
+            - name: dkim
+              mountPath: /app/config/dkim
+            - name: tls
+              mountPath: /app/config/tls
+      volumes:
+        - name: entrypoint
+          configMap:
+            name: "{{ include "haraka.name" . }}-entrypoint"
+            defaultMode: 0775
+        - name: config
+          configMap:
+            name: "{{ include "haraka.name" . }}-config"
+        - name: dkim
+          configMap:
+            name: "{{ include "haraka.name" . }}-dkim"
+        - name: tls
+          secret:
+            secretName: "{{ include "tls.name.baseDomain" . }}"

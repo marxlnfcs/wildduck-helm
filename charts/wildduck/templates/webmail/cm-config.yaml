@@ -1,0 +1,81 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "{{ include "webmail.name" . }}-config"
+  namespace: "{{ .Release.Namespace }}"
+  labels: {{- include "webmail.labels" . | nindent 4 }}
+  annotations:
+    {{- if .Values.commonAnnotations }}
+    {{ toYaml .Values.commonAnnotations | nindent 4 }}
+    {{- end }}
+data:
+  webmail.toml: |-
+    name="Wild Duck Mail"
+    title="wildduck-www"
+    [service]
+        # email domain for new users
+        domain="{{ .Values.common.baseDomain }}"
+        # default quotas for new users
+        quota=1024
+        recipients=2000
+        forwards=2000
+        identities=10
+        allowIdentityEdit=true
+        allowJoin=true
+        enableSpecial=false # if true the allow creating addresses with special usernames
+        # allowed domains for new addresses
+        domains=["{{ .Values.common.baseDomain }}"]
+        generalNotification="" # static notification to show on top of the page
+        [service.sso.http]
+            enabled = false
+            header = "X-UserName" # value from this header is treated as logged in username
+            authRedirect = "http:/127.0.0.1:3000/login" # URL to redirect non-authenticated users
+            logoutRedirect = "http:/127.0.0.1:3000/logout"  # URL to redirect when user clicks on "log out"
+    [api]
+        url="http://{{ include "wildduck.service.name.external" . }}:{{.Values.wildduck.service.ports.http}}"
+        accessToken="{{ default "" .Values.common.wildduck.accessToken }}"
+    [dbs]
+        # mongodb connection string for the main database
+        mongo="{{ include "mongo.connection.webmail" . }}"
+        # redis connection string for Express sessions
+        redis="{{ include "redis.connection.webmail" . }}"
+    [www]
+        host=false
+        port={{ .Values.webmail.service.ports.http | toString }}
+        proxy=false
+        postsize="5MB"
+        log="dev"
+        secret="{{ include "secret.webmail" . }}"
+        secure=false
+        listSize=20
+    [recaptcha]
+        enabled=false
+        siteKey=""
+        secretKey=""
+    [totp]
+        # Issuer name for TOTP, defaults to config.name
+        issuer=false
+        # once setup do not change as it would invalidate all existing 2fa sessions
+        secret="{{ include "secret.totp" . }}"
+    [u2f]
+        # set to false if not using HTTPS
+        enabled=false
+        # must be https url or use default
+        appId="http://"
+    [log]
+        level="silly"
+        mail=true
+    [setup]
+        # these values are shown in the configuration help page
+        [setup.imap]
+            hostname="{{ .Values.common.baseDomain }}"
+            secure=true
+            port={{ .Values.wildduck.service.ports.imap | toString }}
+        [setup.pop3]
+            hostname="{{ .Values.common.baseDomain }}"
+            secure=true
+            port={{ .Values.wildduck.service.ports.pop3 | toString }}
+        [setup.smtp]
+            hostname="{{ .Values.common.baseDomain }}"
+            secure=true
+            port={{ .Values.haraka.service.ports.smtp | toString }}

@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: "{{ include "haraka.service.name" . }}"
+  namespace: "{{ .Release.Namespace }}"
+  labels: {{- include "haraka.labels" . | nindent 4 }}
+  annotations:
+    {{- if .Values.commonAnnotations }}
+    {{ toYaml .Values.commonAnnotations | nindent 4 }}
+    {{- end }}
+spec:
+  type: {{ .Values.haraka.service.type }}
+  ports:
+    - port: {{ .Values.haraka.service.ports.smtp | toString }}
+      targetPort: smtp
+      protocol: TCP
+      name: smtp
+  selector: {{- include "haraka.labels" . | nindent 4 }}

@@ -1,0 +1,21 @@
+{{- if not .Values.redis.external.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "{{ printf "%s-env" (include "redis.name" .) }}"
+  namespace: "{{ .Release.Namespace }}"
+  labels: {{- include "redis.labels" . | nindent 4 }}
+  annotations:
+    {{- if .Values.commonAnnotations }}
+    {{ toYaml .Values.commonAnnotations | nindent 4 }}
+    {{- end }}
+data:
+  BITNAMI_DEBUG: "false"
+  REDIS_REPLICATION_MODE: "master"
+  ALLOW_EMPTY_PASSWORD: "no"
+  REDIS_TLS_ENABLED: "no"
+  REDIS_PORT: "6379"
+  {{- if .Values.redis.password }}
+  REDIS_PASSWORD: "{{ .Values.redis.password }}"
+  {{- end }}
+{{- end }}

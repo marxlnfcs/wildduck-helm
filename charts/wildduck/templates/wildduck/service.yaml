@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: "{{ include "wildduck.service.name" . }}"
+  namespace: "{{ .Release.Namespace }}"
+  labels: {{- include "wildduck.labels" . | nindent 4 }}
+  annotations:
+    {{- if .Values.commonAnnotations }}
+    {{ toYaml .Values.commonAnnotations | nindent 4 }}
+    {{- end }}
+spec:
+  type: {{ .Values.wildduck.service.type }}
+  ports:
+    - port: {{ .Values.wildduck.service.ports.http | int }}
+      targetPort: http
+      protocol: TCP
+      name: http
+    - port: {{ .Values.wildduck.service.ports.imap | int }}
+      targetPort: imap
+      protocol: TCP
+      name: imap
+    - port: {{ .Values.wildduck.service.ports.pop3 | int }}
+      targetPort: pop3
+      protocol: TCP
+      name: pop3
+  selector: {{- include "wildduck.labels" . | nindent 4 }}

@@ -1,0 +1,138 @@
+{{- if not .Values.redis.external.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "redis.name" . }}
+  namespace: "{{ .Release.Namespace }}"
+  labels: {{- include "redis.labels" . | nindent 4 }}
+  annotations:
+    {{- if .Values.commonAnnotations }}
+    {{ toYaml .Values.commonAnnotations | nindent 4 }}
+    {{- end }}
+spec:
+  selector:
+    matchLabels: {{- include "redis.labels" . | nindent 6 }}
+  template:
+    metadata:
+      labels: {{- include "redis.labels" . | nindent 8 }}
+      annotations:
+        checksum/cm-env: {{ include (print $.Template.BasePath "/redis/cm-env.yaml") . | sha256sum }}
+        checksum/cm-scripts: {{ include (print $.Template.BasePath "/redis/cm-scripts.yaml") . | sha256sum }}
+        checksum/cm-health: {{ include (print $.Template.BasePath "/redis/cm-health.yaml") . | sha256sum }}
+        checksum/cm-config: {{ include (print $.Template.BasePath "/redis/cm-config.yaml") . | sha256sum }}
+        {{- if .Values.redis.podAnnotations }}
+        {{ toYaml .Values.redis.podAnnotations | nindent 8 }}
+        {{- end }}
+        {{- if .Values.commonAnnotations }}
+        {{ toYaml .Values.commonAnnotations | nindent 8 }}
+        {{- end }}
+    spec:
+      serviceAccountName: "{{ default (include "redis.name" . ) .Values.serviceAccount.redis.name }}"
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.redis.podSecurityContext | nindent 8 }}
+      {{- with .Values.redis.nodeSelector }}
+      nodeSelector:
+         {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.redis.affinity }}
+      affinity:
+         {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.redis.tolerations }}
+      tolerations:
+         {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      containers:
+        - name: redis
+          image: "bitnami/redis:6.0.14"
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            {{- toYaml .Values.redis.securityContext | nindent 12 }}
+          args:
+            - "/opt/bitnami/scripts/start-scripts/start-master.sh"
+          envFrom:
+            - configMapRef:
+                name: "{{ printf "%s-env" (include "redis.name" .) }}"
+          ports:
+            - name: redis
+              containerPort: 6379
+              protocol: TCP
+          livenessProbe:
+            exec:
+              command:
+                - "sh"
+                - "-c"
+                - "/health/ping_liveness_local.sh 5"
+            failureThreshold: 5
+            initialDelaySeconds: 20
+            periodSeconds: 5
+            successThreshold: 1
+            timeoutSeconds: 5
+          readinessProbe:
+            exec:
+              command:
+                - "sh"
+                - "-c"
+                - "/health/ping_readiness_local.sh 1"
+            failureThreshold: 5
+            initialDelaySeconds: 20
+            periodSeconds: 5
+            successThreshold: 1
+            timeoutSeconds: 1
+          startupProbe:
+            tcpSocket:
+              port: redis
+            failureThreshold: 5
+            initialDelaySeconds: 20
+            periodSeconds: 5
+            successThreshold: 1
+            timeoutSeconds: 5
+          resources:
+            {{- toYaml .Values.redis.resources | nindent 12 }}
+          volumeMounts:
+            - name: redis-data
+              mountPath: /data
+            - name: start-scripts
+              mountPath: /opt/bitnami/scripts/start-scripts
+            - name: health
+              mountPath: /health
+            - name: config
+              mountPath: /opt/bitnami/redis/mounted-etc
+            - name: redis-tmp-conf
+              mountPath: /opt/bitnami/redis/etc/
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: start-scripts
+          configMap:
+            name: "{{ printf "%s-scripts" (include "redis.name" .) }}"
+            defaultMode: 0755
+        - name: health
+          configMap:
+            name: "{{ printf "%s-health" (include "redis.name" .) }}"
+            defaultMode: 0755
+        {{- if not .Values.redis.persistence.enabled }}
+        - name: redis-data
+          emptyDir: {}
+        {{- else if .Values.redis.persistence.existingClaim }}
+        - name: redis-data
+          persistentVolumeClaim:
+            claimName: {{ .Values.redis.persistence.existingClaim }}
+        {{- else }}
+        - name: redis-data
+          persistentVolumeClaim:
+            claimName: {{ printf "%s" (include "redis.name" . ) }}
+        {{- end }}
+        - name: config
+          configMap:
+            name: "{{ printf "%s-config" (include "redis.name" . ) }}"
+        - name: redis-tmp-conf
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
+{{- end }}

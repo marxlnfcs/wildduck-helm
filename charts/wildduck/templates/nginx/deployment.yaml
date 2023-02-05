@@ -1,0 +1,69 @@
+{{- if .Values.nginx.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "nginx.name" . }}
+  namespace: "{{ .Release.Namespace }}"
+  labels: {{- include "nginx.labels" . | nindent 4 }}
+  annotations:
+    {{- if .Values.commonAnnotations }}
+    {{ toYaml .Values.commonAnnotations | nindent 4 }}
+    {{- end }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {{- include "nginx.labels" . | nindent 6 }}
+  template:
+    metadata:
+      labels: {{- include "nginx.labels" . | nindent 8 }}
+      annotations:
+        checksum/cm-config: "{{ include (print $.Template.BasePath "/nginx/cm-config.yaml") . | sha256sum }}"
+        {{- if .Values.commonAnnotations }}
+        {{ toYaml .Values.commonAnnotations | nindent 8 }}
+        {{- end }}
+    spec:
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      serviceAccountName: "{{ default (include "nginx.name" . ) .Values.serviceAccount.nginx.name }}"
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: nginx
+          image: "{{ .Values.nginx.image.name }}"
+          imagePullPolicy: {{ .Values.nginx.image.pullPolicy }}
+          ports:
+            {{- if .Values.nginx.services.imap }}
+            - name: imap
+              containerPort: {{ default "143" .Values.wildduck.service.ports.imap }}
+              hostPort: {{ default "143" .Values.wildduck.service.ports.imap }}
+              protocol: TCP
+            {{- end }}
+            {{- if .Values.nginx.services.pop3 }}
+            - name: pop3
+              containerPort: {{ default "110" .Values.wildduck.service.ports.pop3 }}
+              hostPort: {{ default "110" .Values.wildduck.service.ports.pop3 }}
+              protocol: TCP
+            {{- end }}
+            {{- if .Values.nginx.services.smtp_inbound }}
+            - name: smtp-inbound
+              containerPort: {{ default "25" .Values.haraka.service.ports.smtp | int }}
+              hostPort: {{ default "25" .Values.haraka.service.ports.smtp | int }}
+              protocol: TCP
+            {{- end }}
+            {{- if .Values.nginx.services.smtp_outbound }}
+            - name: smtp-outbound
+              containerPort: {{ default "587" .Values.zonemta.service.ports.smtp | int }}
+              hostPort: {{ default "587" .Values.zonemta.service.ports.smtp | int }}
+              protocol: TCP
+            {{- end }}
+          volumeMounts:
+            - name: config
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+      volumes:
+        - name: config
+          configMap:
+            name: "{{ include "nginx.name" . }}-config"
+{{- end }}

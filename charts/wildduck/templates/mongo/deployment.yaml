@@ -1,0 +1,103 @@
+{{- if not .Values.mongo.external.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "mongo.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels: {{- include "mongo.labels" . | nindent 4 }}
+  annotations:
+    {{- if .Values.commonAnnotations }}
+    {{ toYaml .Values.commonAnnotations | nindent 4 }}
+    {{- end }}
+spec:
+  selector:
+    matchLabels: {{- include "mongo.labels" . | nindent 6 }}
+  template:
+    metadata:
+      labels: {{- include "mongo.labels" . | nindent 8 }}
+      annotations:
+        checksum/cm-env: {{ include (print $.Template.BasePath "/mongo/cm-env.yaml") . | sha256sum }}
+        {{- if .Values.mongo.podAnnotations }}
+        {{ toYaml .Values.mongo.podAnnotations | nindent 8 }}
+        {{- end }}
+        {{- if .Values.commonAnnotations }}
+        {{ toYaml .Values.commonAnnotations | nindent 8 }}
+        {{- end }}
+    spec:
+      serviceAccountName: "{{ default (include "mongo.name" . ) .Values.serviceAccount.mongo.name }}"
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.mongo.podSecurityContext | nindent 8 }}
+      {{- with .Values.mongo.nodeSelector }}
+      nodeSelector:
+         {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.mongo.affinity }}
+      affinity:
+         {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.mongo.tolerations }}
+      tolerations:
+         {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      containers:
+        - name: mongo
+          image: "bitnami/mongodb"
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            {{- toYaml .Values.mongo.securityContext | nindent 12 }}
+          envFrom:
+            - configMapRef:
+                name: "{{ printf "%s-env" (include "mongo.name" .) }}"
+          ports:
+            - name: mongo
+              containerPort: 27017
+              protocol: TCP
+          livenessProbe:
+            tcpSocket:
+              port: 27017
+            failureThreshold: 6
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            successThreshold: 1
+            timeoutSeconds: 10
+          readinessProbe:
+            tcpSocket:
+              port: 27017
+            failureThreshold: 6
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            successThreshold: 1
+            timeoutSeconds: 10
+          startupProbe:
+            tcpSocket:
+              port: 27017
+            failureThreshold: 6
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            successThreshold: 1
+            timeoutSeconds: 10
+          resources:
+            {{- toYaml .Values.mongo.resources | nindent 12 }}
+          volumeMounts:
+            - name: data
+              mountPath: /bitnami/mongodb
+
+      volumes:
+        {{- if not .Values.mongo.persistence.enabled }}
+        - name: data
+          emptyDir: {}
+        {{- else if .Values.mongo.persistence.existingClaim }}
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ .Values.mongo.persistence.existingClaim }}
+        {{- else }}
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ printf "%s" (include "mongo.name" . ) }}
+        {{- end }}
+{{- end }}

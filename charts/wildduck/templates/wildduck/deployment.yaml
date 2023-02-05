@@ -1,0 +1,97 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "wildduck.name" . }}
+  namespace: "{{ .Release.Namespace }}"
+  labels: {{- include "wildduck.labels" . | nindent 4 }}
+  annotations:
+    {{- if .Values.commonAnnotations }}
+    {{ toYaml .Values.commonAnnotations | nindent 4 }}
+    {{- end }}
+spec:
+  {{- if not .Values.wildduck.autoscaling.enabled }}
+  replicas: {{ .Values.wildduck.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels: {{- include "wildduck.labels" . | nindent 6 }}
+  template:
+    metadata:
+      labels: {{- include "wildduck.labels" . | nindent 8 }}
+      annotations:
+        checksum/cm-config: "{{ include (print $.Template.BasePath "/wildduck/cm-config.yaml") . | sha256sum }}"
+        {{- if .Values.wildduck.podAnnotations }}
+        {{ toYaml .Values.wildduck.podAnnotations | nindent 8 }}
+        {{- end }}
+        {{- if .Values.commonAnnotations }}
+        {{ toYaml .Values.commonAnnotations | nindent 8 }}
+        {{- end }}
+    spec:
+      serviceAccountName: "{{ default (include "wildduck.name" . ) .Values.serviceAccount.wildduck.name }}"
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.wildduck.podSecurityContext | nindent 8 }}
+      {{- with .Values.wildduck.nodeSelector }}
+      nodeSelector:
+         {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.wildduck.affinity }}
+      affinity:
+         {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.wildduck.tolerations }}
+      tolerations:
+         {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: wildduck
+          securityContext:
+            {{- toYaml .Values.wildduck.securityContext | nindent 12 }}
+          image: "{{ .Values.wildduck.image.name }}"
+          imagePullPolicy: {{ .Values.wildduck.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+            - name: imap
+              containerPort: 143
+              protocol: TCP
+            - name: pop3
+              containerPort: 110
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /users
+              port: http
+              scheme: HTTP
+              {{- if .Values.common.wildduck.accessToken }}
+              httpHeaders:
+                - name: X-Access-Token
+                  value:  {{ .Values.common.wildduck.accessToken }}
+              {{- end }}
+          readinessProbe:
+            httpGet:
+              path: /users
+              port: http
+              scheme: HTTP
+              {{- if .Values.common.wildduck.accessToken }}
+              httpHeaders:
+                - name: X-Access-Token
+                  value: {{ .Values.common.wildduck.accessToken }}
+              {{- end }}
+          resources:
+            {{- toYaml .Values.wildduck.resources | nindent 12 }}
+          volumeMounts:
+            - name: config
+              mountPath: /wildduck/config
+            - name: tls
+              mountPath: /wildduck/config/tls
+      volumes:
+        - name: config
+          configMap:
+            name: "{{ include "wildduck.name" . }}-config"
+        - name: tls
+          secret:
+            secretName: "{{ include "tls.name.baseDomain" . }}"

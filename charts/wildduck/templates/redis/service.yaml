@@ -1,0 +1,19 @@
+{{- if not .Values.redis.external.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "redis.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels: {{- include "redis.labels" . | nindent 4 }}
+  annotations:
+    {{- if .Values.commonAnnotations }}
+    {{ toYaml .Values.commonAnnotations | nindent 4 }}
+    {{- end }}
+spec:
+  type: {{ .Values.redis.service.type }}
+  ports:
+    - name: redis
+      port: {{ .Values.redis.service.port | int }}
+      targetPort: redis
+  selector: {{- include "redis.labels" . | nindent 4 }}
+{{- end }}

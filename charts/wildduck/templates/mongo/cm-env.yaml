@@ -1,0 +1,27 @@
+{{- if not .Values.mongo.external.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "{{ printf "%s-env" (include "mongo.name" .) }}"
+  namespace: "{{ .Release.Namespace }}"
+  labels: {{- include "mongo.labels" . | nindent 4 }}
+  annotations:
+    {{- if .Values.commonAnnotations }}
+    {{ toYaml .Values.commonAnnotations | nindent 4 }}
+    {{- end }}
+data:
+  BITNAMI_DEBUG: "false"
+  MONGODB_ROOT_USER: "admin"
+  MONGODB_ROOT_PASSWORD: "admin"
+  MONGODB_EXTRA_USERNAMES: "{{ default "wildduck" .Values.common.database.mongo.wildduck.username .Values.mongo.username }},{{ default "wildduck-test" .Values.common.database.mongo.wildduck_test.username .Values.mongo.username }},{{ default "zone-mta" (index .Values.common.database.mongo "zone-mta" "username") .Values.mongo.username }},{{ default "webmail" .Values.common.database.mongo.webmail.username .Values.mongo.username }}"
+  MONGODB_EXTRA_PASSWORDS: "{{ default "wildduck" .Values.common.database.mongo.wildduck.password .Values.mongo.password }},{{ default "wildduck-test" .Values.common.database.mongo.wildduck_test.password .Values.mongo.password }},{{ default "zone-mta" (index .Values.common.database.mongo "zone-mta" "password") .Values.mongo.password }},{{ default "wildduck" .Values.common.database.mongo.webmail.password .Values.mongo.password }}"
+  MONGODB_EXTRA_DATABASES: "{{include "mongo.database.wildduck" .}},{{include "mongo.database.wildduck.test" .}},{{include "mongo.database.zonemta" .}},{{include "mongo.database.webmail" .}}"
+  ALLOW_EMPTY_PASSWORD: "no"
+  MONGODB_PORT_NUMBER: "27017"
+  MONGODB_SYSTEM_LOG_VERBOSITY: "0"
+  MONGODB_DISABLE_SYSTEM_LOG: "no"
+  MONGODB_DISABLE_JAVASCRIPT: "no"
+  MONGODB_ENABLE_JOURNAL: "yes"
+  MONGODB_ENABLE_IPV6: "no"
+  MONGODB_ENABLE_DIRECTORY_PER_DB: "no"
+{{- end }}

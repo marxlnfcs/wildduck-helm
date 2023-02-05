@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "webmail.name" . }}
+  namespace: "{{ .Release.Namespace }}"
+  labels: {{- include "webmail.labels" . | nindent 4 }}
+  annotations:
+    {{- if .Values.commonAnnotations }}
+    {{ toYaml .Values.commonAnnotations | nindent 4 }}
+    {{- end }}
+spec:
+  {{- if not .Values.webmail.autoscaling.enabled }}
+  replicas: {{ .Values.webmail.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels: {{- include "webmail.labels" . | nindent 6 }}
+  template:
+    metadata:
+      labels: {{- include "webmail.labels" . | nindent 8 }}
+      annotations:
+        checksum/cm-config: "{{ include (print $.Template.BasePath "/webmail/cm-config.yaml") . | sha256sum }}"
+        {{- if .Values.webmail.podAnnotations }}
+        {{ toYaml .Values.webmail.podAnnotations | nindent 8 }}
+        {{- end }}
+        {{- if .Values.commonAnnotations }}
+        {{ toYaml .Values.commonAnnotations | nindent 8 }}
+        {{- end }}
+    spec:
+      serviceAccountName: "{{ default (include "webmail.name" . ) .Values.serviceAccount.webmail.name }}"
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.webmail.podSecurityContext | nindent 8 }}
+      {{- with .Values.webmail.nodeSelector }}
+      nodeSelector:
+         {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.webmail.affinity }}
+      affinity:
+         {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.webmail.tolerations }}
+      tolerations:
+         {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: webmail
+          securityContext:
+            {{- toYaml .Values.webmail.securityContext | nindent 12 }}
+          image: "{{ .Values.webmail.image.name }}"
+          imagePullPolicy: {{ .Values.webmail.image.pullPolicy }}
+          args:
+            - "--config=./config/webmail.toml"
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+              scheme: HTTP
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+              scheme: HTTP
+          resources:
+            {{- toYaml .Values.webmail.resources | nindent 12 }}
+          volumeMounts:
+            - name: config
+              mountPath: /app/config/webmail.toml
+              subPath: webmail.toml
+      volumes:
+        - name: config
+          configMap:
+            name: "{{ include "webmail.name" . }}-config"

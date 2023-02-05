@@ -1,0 +1,89 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "rspamd.name" . }}
+  labels: {{- include "rspamd.labels" . | nindent 4 }}
+  annotations:
+    {{- if .Values.commonAnnotations }}
+    {{ toYaml .Values.commonAnnotations | nindent 4 }}
+    {{- end }}
+spec:
+  {{- if not .Values.rspamd.autoscaling.enabled }}
+  replicas: {{ .Values.rspamd.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels: {{- include "rspamd.labels" . | nindent 6 }}
+  template:
+    metadata:
+      labels: {{- include "rspamd.labels" . | nindent 8 }}
+      annotations:
+        checksum/cm-local: "{{ include (print $.Template.BasePath "/rspamd/cm-local.yaml") . | sha256sum }}"
+        checksum/cm-override: "{{ include (print $.Template.BasePath "/rspamd/cm-override.yaml") . | sha256sum }}"
+        {{- if .Values.rspamd.podAnnotations }}
+        {{ toYaml .Values.rspamd.podAnnotations | nindent 8 }}
+        {{- end }}
+        {{- if .Values.commonAnnotations }}
+        {{ toYaml .Values.commonAnnotations | nindent 8 }}
+        {{- end }}
+    spec:
+      serviceAccountName: "{{ default (include "rspamd.name" . ) .Values.serviceAccount.rspamd.name }}"
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.rspamd.podSecurityContext | nindent 8 }}
+      {{- with .Values.rspamd.nodeSelector }}
+      nodeSelector:
+         {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.rspamd.affinity }}
+      affinity:
+         {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.rspamd.tolerations }}
+      tolerations:
+         {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: rspamd
+          securityContext:
+            {{- toYaml .Values.rspamd.securityContext | nindent 12 }}
+          image: "{{ .Values.rspamd.image.name }}"
+          imagePullPolicy: {{ .Values.rspamd.image.pullPolicy }}
+          ports:
+            - name: rspamd
+              containerPort: 11333
+              protocol: TCP
+          startupProbe:
+            tcpSocket:
+              port: rspamd
+            periodSeconds: 10
+            failureThreshold: 90
+            timeoutSeconds: 5
+          livenessProbe:
+            tcpSocket:
+              port: rspamd
+            periodSeconds: 10
+            failureThreshold: 90
+            timeoutSeconds: 5
+          readinessProbe:
+            tcpSocket:
+              port: rspamd
+            periodSeconds: 10
+            failureThreshold: 90
+            timeoutSeconds: 5
+          resources:
+            {{- toYaml .Values.rspamd.resources | nindent 12 }}
+          volumeMounts:
+            - name: local
+              mountPath: /etc/rspamd/local.d
+            - name: override
+              mountPath: /etc/rspamd/override.d
+      volumes:
+        - name: local
+          configMap:
+            name: "{{ include "rspamd.name" . }}-local"
+        - name: override
+          configMap:
+            name: "{{ include "rspamd.name" . }}-override"

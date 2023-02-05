@@ -1,0 +1,94 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "zonemta.name" . }}
+  namespace: "{{ .Release.Namespace }}"
+  labels: {{- include "zonemta.labels" . | nindent 4 }}
+  annotations:
+    {{- if .Values.commonAnnotations }}
+    {{ toYaml .Values.commonAnnotations | nindent 4 }}
+    {{- end }}
+spec:
+  {{- if not .Values.zonemta.autoscaling.enabled }}
+  replicas: {{ .Values.zonemta.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels: {{- include "zonemta.labels" . | nindent 6 }}
+  template:
+    metadata:
+      labels: {{- include "zonemta.labels" . | nindent 8 }}
+      annotations:
+        checksum/cm-config: "{{ include (print $.Template.BasePath "/zone-mta/cm-config.yaml") . | sha256sum }}"
+        checksum/cm-interfaces: "{{ include (print $.Template.BasePath "/zone-mta/cm-interfaces.yaml") . | sha256sum }}"
+        checksum/cm-plugins: "{{ include (print $.Template.BasePath "/zone-mta/cm-plugins.yaml") . | sha256sum }}"
+        checksum/cm-zones: "{{ include (print $.Template.BasePath "/zone-mta/cm-zones.yaml") . | sha256sum }}"
+        {{- if .Values.zonemta.podAnnotations }}
+        {{ toYaml .Values.zonemta.podAnnotations | nindent 8 }}
+        {{- end }}
+        {{- if .Values.commonAnnotations }}
+        {{ toYaml .Values.commonAnnotations | nindent 8 }}
+        {{- end }}
+    spec:
+      serviceAccountName: "{{ default (include "zonemta.name" . ) .Values.serviceAccount.zonemta.name }}"
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.zonemta.podSecurityContext | nindent 8 }}
+      {{- with .Values.zonemta.nodeSelector }}
+      nodeSelector:
+         {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.zonemta.affinity }}
+      affinity:
+         {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.zonemta.tolerations }}
+      tolerations:
+         {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: zonemta
+          securityContext:
+            {{- toYaml .Values.zonemta.securityContext | nindent 12 }}
+          image: "{{ .Values.zonemta.image.name }}"
+          imagePullPolicy: {{ .Values.zonemta.image.pullPolicy }}
+          ports:
+            - name: smtp
+              containerPort: 587
+              protocol: TCP
+          livenessProbe:
+            tcpSocket:
+              port: smtp
+            initialDelaySeconds: 20
+            periodSeconds: 30
+          readinessProbe:
+            tcpSocket:
+              port: smtp
+            initialDelaySeconds: 20
+            periodSeconds: 30
+          resources:
+            {{- toYaml .Values.zonemta.resources | nindent 12 }}
+          volumeMounts:
+            - name: config
+              mountPath: /app/config
+            - name: interfaces
+              mountPath: /app/config/interfaces
+            - name: plugins
+              mountPath: /app/config/plugins
+            - name: zones
+              mountPath: /app/config/zones
+      volumes:
+        - name: config
+          configMap:
+            name: "{{ include "zonemta.name" . }}-config"
+        - name: interfaces
+          configMap:
+            name: "{{ include "zonemta.name" . }}-interfaces"
+        - name: plugins
+          configMap:
+            name: "{{ include "zonemta.name" . }}-plugins"
+        - name: zones
+          configMap:
+            name: "{{ include "zonemta.name" . }}-zones"

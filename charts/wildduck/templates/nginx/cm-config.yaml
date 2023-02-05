@@ -1,0 +1,64 @@
+{{- if .Values.nginx.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "{{ include "nginx.name" . }}-config"
+  namespace: "{{ .Release.Namespace }}"
+  labels: {{- include "nginx.labels" . | nindent 4 }}
+  annotations:
+    {{- if .Values.commonAnnotations }}
+    {{ toYaml .Values.commonAnnotations | nindent 4 }}
+    {{- end }}
+data:
+  nginx.conf: |-
+    user  nginx;
+    worker_processes  auto;
+
+    error_log  /var/log/nginx/error.log notice;
+    pid        /var/run/nginx.pid;
+
+    events {
+      worker_connections  1024;
+    }
+
+    stream {
+
+      {{- if .Values.nginx.services.wildduck }}
+      upstream backend_imap {
+        server {{ printf "%s:%s" (include "wildduck.service.name.external" .) (default "143" (.Values.wildduck.service.imapPort | toString)) }};
+      }
+      upstream backend_pop3 {
+        server {{ printf "%s:%s" (include "wildduck.service.name.external" .) (default "110" (.Values.wildduck.service.pop3Port | toString)) }};
+      }
+      server {
+        listen {{ default "143" (.Values.wildduck.service.imapPort | toString) }};
+        proxy_pass backend_imap;
+      }
+      server {
+        listen {{ default "110" (.Values.wildduck.service.pop3Port | toString) }};
+        proxy_pass backend_pop3;
+      }
+      {{- end }}
+
+      {{- if .Values.nginx.services.haraka }}
+      upstream backend_smtp_haraka {
+        server {{ printf "%s:%s" (include "haraka.service.name.external" .) (default "25" (.Values.haraka.service.port | toString)) }};
+      }
+      server {
+        listen {{ default "25" (.Values.haraka.service.port | toString) }};
+        proxy_pass backend_smtp_haraka;
+      }
+      {{- end }}
+
+      {{- if .Values.nginx.services.zonemta }}
+      upstream backend_smtp_zonemta {
+        server {{ printf "%s:%s" (include "zonemta.service.name.external" .) (default "587" (.Values.zonemta.service.port | toString)) }};
+      }
+      server {
+        listen {{ default "587" (.Values.zonemta.service.port | toString) }};
+        proxy_pass backend_smtp_zonemta;
+      }
+      {{- end }}
+
+    }
+{{- end }}
