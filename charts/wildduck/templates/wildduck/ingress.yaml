@@ -1,0 +1,36 @@
+{{- if .Values.wildduck.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "wildduck.name" . }}
+  labels:
+    {{- include "wildduck.labels" . | nindent 4 }}
+  annotations:
+    {{- if .Values.commonAnnotations }}
+    {{ toYaml .Values.commonAnnotations | nindent 4 }}
+    {{- end }}
+    {{- if .Values.wildduck.ingress.annotations }}
+    {{ toYaml .Values.wildduck.ingress.annotations | nindent 4 }}
+    {{- end }}
+spec:
+  {{- if .Values.wildduck.ingress.ingressClassName }}
+  ingressClassName: "{{ .Values.wildduck.ingress.ingressClassName }}"
+  {{- end }}
+  rules:
+    - host: "{{ include "wildduck.ingress.hostname" . }}"
+      http:
+        paths:
+          - path: "{{ default "/" .Values.wildduck.ingress.path }}"
+            pathType: "{{ default "ImplementationSpecific" .Values.wildduck.ingress.pathType }}"
+            backend:
+              service:
+                name: "{{ include "wildduck.service.name" . }}"
+                port:
+                  name: http
+  {{- if .Values.wildduck.ingress.tls }}
+  tls:
+    - hosts:
+        - "{{ include "wildduck.ingress.hostname" . }}"
+      secretName: "{{ include "wildduck.ingress.tls.secret" . }}"
+  {{- end }}
+{{- end }}

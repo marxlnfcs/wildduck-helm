@@ -6,6 +6,6 @@
 {{- if .Values.tls.existingSecretName }}
 {{ .Values.tls.existingSecretName }}
 {{- else }}
-{{- include "tls.name.generate" (.Values.common.baseDomain) }}
+{{- include "tls.name.generate" (printf "%s-mail" (.Values.common.baseDomain)) }}
 {{- end }}
 {{- end }}

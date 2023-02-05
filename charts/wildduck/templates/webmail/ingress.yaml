@@ -1,0 +1,36 @@
+{{- if and (.Values.webmail.enabled) (.Values.webmail.ingress.enabled) }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "webmail.name" . }}
+  labels:
+    {{- include "webmail.labels" . | nindent 4 }}
+  annotations:
+    {{- if .Values.commonAnnotations }}
+    {{ toYaml .Values.commonAnnotations | nindent 4 }}
+    {{- end }}
+    {{- if .Values.webmail.ingress.annotations }}
+    {{ toYaml .Values.webmail.ingress.annotations | nindent 4 }}
+    {{- end }}
+spec:
+  {{- if .Values.webmail.ingress.ingressClassName }}
+  ingressClassName: "{{ .Values.webmail.ingress.ingressClassName }}"
+  {{- end }}
+  rules:
+    - host: "{{ include "webmail.ingress.hostname" . }}"
+      http:
+        paths:
+          - path: "{{ default "/" .Values.webmail.ingress.path }}"
+            pathType: "{{ default "ImplementationSpecific" .Values.webmail.ingress.pathType }}"
+            backend:
+              service:
+                name: "{{ include "webmail.service.name" . }}"
+                port:
+                  name: http
+  {{- if .Values.webmail.ingress.tls }}
+  tls:
+    - hosts:
+        - "{{ include "webmail.ingress.hostname" . }}"
+      secretName: "{{ include "webmail.ingress.tls.secret" . }}"
+  {{- end }}
+{{- end }}

@@ -1,4 +1,4 @@
-{{- if .Values.webmail.autoscaling.enabled }}
+{{- if and (.Values.webmail.enabled) (.Values.webmail.autoscaling.enabled) }}
 apiVersion: autoscaling/v2beta1
 kind: HorizontalPodAutoscaler
 metadata:

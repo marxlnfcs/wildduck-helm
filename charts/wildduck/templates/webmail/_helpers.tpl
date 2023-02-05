@@ -25,3 +25,29 @@ app.kubernetes.io/component: webmail
     {{- printf "%s-webmail.%s.svc.%s" (include "common.names.fullname" .) (.Release.Namespace) (.Values.clusterDomain) -}}
 {{ end }}
 {{- end }}
+
+{{- define "webmail.ingress.hostname" }}
+{{- if .Values.webmail.ingress.hostname }}
+    {{- .Values.webmail.ingress.hostname }}
+{{- else if .Values.common.ingressDomain }}
+    {{- printf "webmail.%s" (.Values.common.ingressDomain) }}
+{{- else }}
+    {{- printf "webmail.%s" (.Values.common.baseDomain) }}
+{{- end }}
+{{- end }}
+
+{{- define "webmail.ingress.url" }}
+{{- if .Values.webmail.ingress.tls }}
+{{- printf "https://%s" (include "webmail.ingress.hostname" .) }}
+{{- else }}
+{{- printf "http://%s" (include "webmail.ingress.hostname" .) }}
+{{- end }}
+{{- end }}
+
+{{- define "webmail.ingress.tls.secret" }}
+{{- if .Values.webmail.ingress.existingSecretName }}
+{{ .Values.webmail.ingress.existingSecretName }}
+{{- else }}
+{{- include "tls.name.generate" (include "webmail.ingress.hostname" .) }}
+{{- end }}
+{{- end }}

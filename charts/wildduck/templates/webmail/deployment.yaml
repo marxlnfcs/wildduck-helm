@@ -1,3 +1,4 @@
+{{- if .Values.webmail.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -77,3 +78,4 @@ spec:
         - name: config
           configMap:
             name: "{{ include "webmail.name" . }}-config"
+{{- end }}
