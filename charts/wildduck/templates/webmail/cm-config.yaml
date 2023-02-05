@@ -34,7 +34,7 @@ data:
             logoutRedirect = "http:/127.0.0.1:3000/logout"  # URL to redirect when user clicks on "log out"
     [api]
         url="http://{{ include "wildduck.service.name.external" . }}:{{.Values.wildduck.service.ports.http}}"
-        accessToken="{{ default "" .Values.common.wildduck.accessToken }}"
+        accessToken="{{ include "secret.wildduck.api" . }}"
     [dbs]
         # mongodb connection string for the main database
         mongo="{{ include "mongo.connection.webmail" . }}"

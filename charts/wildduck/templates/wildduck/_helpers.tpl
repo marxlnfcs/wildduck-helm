@@ -3,6 +3,14 @@
 app.kubernetes.io/component: wildduck
 {{- end -}}
 
+{{- define "wildduck.access.token" }}
+{{- if .Values.common.wildduck.accessToken }}
+{{ .Values.common.wildduck.accessToken }}
+{{- else }}
+{{- include "secret.wildduck.api" . }}
+{{- end }}
+{{- end }}
+
 
 {{- define "wildduck.name" -}}
   {{- printf "%s" (include "common.names.fullname" .) -}}

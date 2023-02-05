@@ -48,7 +48,10 @@ common:
   ## @param common.wildduck - Common wildduck configurations
   ##
   wildduck:
-    accessToken: "chang3m3!"
+    ## @param common.wildduck.accessToken - Access token for the wildduck api
+    ## If no token is set the chart generates one automatically and stores it into "<fullname>-access-token"
+    ##
+    accessToken: ""
 
   ## @param common.additionalAccounts - Creates all accounts and its domain if not exists
   ## Example:

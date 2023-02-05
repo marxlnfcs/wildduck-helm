@@ -66,21 +66,17 @@ spec:
               path: /users
               port: http
               scheme: HTTP
-              {{- if .Values.common.wildduck.accessToken }}
               httpHeaders:
                 - name: X-Access-Token
-                  value:  {{ .Values.common.wildduck.accessToken }}
-              {{- end }}
+                  value: "{{ include "secret.wildduck.api" . }}"
           readinessProbe:
             httpGet:
               path: /users
               port: http
               scheme: HTTP
-              {{- if .Values.common.wildduck.accessToken }}
               httpHeaders:
                 - name: X-Access-Token
-                  value: {{ .Values.common.wildduck.accessToken }}
-              {{- end }}
+                  value: "{{ include "secret.wildduck.api" . }}"
           resources:
             {{- toYaml .Values.wildduck.resources | nindent 12 }}
           volumeMounts:
