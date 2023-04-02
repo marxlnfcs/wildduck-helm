@@ -82,20 +82,12 @@ common:
     redis:
       wildduck:
         database: 3
-        username: "" # Only used if redis.external.enabled is true
-        password: "sup3r-s3cr3t-password" # Only used if redis.external.enabled is true
       webmail:
         database: 5
-        username: "" # Only used if redis.external.enabled is true
-        password: "sup3r-s3cr3t-password" # Only used if redis.external.enabled is true
       rspamd:
         database: 4
-        username: "" # Only used if redis.external.enabled is true
-        password: "sup3r-s3cr3t-password" # Only used if redis.external.enabled is true
       zone-mta:
         database: 2
-        username: "" # Only used if redis.external.enabled is true
-        password: "sup3r-s3cr3t-password" # Only used if redis.external.enabled is true
 
 ## @param tls - Defines the certificate to use for all deployments
 ## Defines if the chart should automatically create a certificate for every deployment who needs it

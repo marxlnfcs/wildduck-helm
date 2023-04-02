@@ -85,12 +85,43 @@
 {{- printf "%s" (default "2" (index .Values.common.database.redis "zone-mta" "database" | toString) ) }}
 {{- end }}
 
+{{- define "redis.connection.host" }}
+{{- $databaseName := (include "redis.database.wildduck" .) }}
+{{- if .Values.redis.external.enabled }}
+{{- printf "%s" (.Values.redis.external.host) }}
+{{- else }}
+{{- printf "%s" (include "redis.service.name.external" .) }}
+{{- end }}
+{{- end }}
+{{- define "redis.connection.port" }}
+{{- if .Values.redis.external.enabled }}
+{{- printf "%s" (default "6379" .Values.redis.external.port) }}
+{{- else }}
+{{- printf "%s" (default "6379" .Values.redis.service.port) }}
+{{- end }}
+{{- end }}
+{{- define "redis.connection.username" }}
+{{- if .Values.redis.external.enabled }}
+{{- printf "%s" (default "" .Values.redis.external.username) }}
+{{- else }}
+{{- printf "%s" ("") }}
+{{- end }}
+{{- end }}
+{{- define "redis.connection.password" }}
+{{- if .Values.redis.external.enabled }}
+{{- printf "%s" (default "" .Values.redis.external.password) }}
+{{- else }}
+{{- printf "%s" (default "" .Values.redis.password) }}
+{{- end }}
+{{- end }}
+{{- define "redis.connection.database.wildduck" }}
+{{- printf "%s" (include "redis.database.wildduck" .) }}
+{{- end }}
+
 {{- define "redis.connection.wildduck" }}
 {{- $databaseName := (include "redis.database.wildduck" .) }}
 {{- if .Values.redis.external.enabled }}
-{{- if or (.Values.common.database.redis.wildduck.username) (.Values.common.database.redis.wildduck.password) }}
-{{- printf "redis://%s:%s@%s:%s/%s" (.Values.common.database.redis.wildduck.username) (.Values.common.database.redis.wildduck.password) (.Values.redis.external.host) (.Values.redis.external.port) ($databaseName) }}
-{{- else if or (.Values.redis.external.username) (.Values.redis.external.password) }}
+{{- if or (.Values.redis.external.username) (.Values.redis.external.password) }}
 {{- printf "redis://%s:%s@%s:%s/%s" (.Values.redis.external.username) (.Values.redis.external.password) (.Values.redis.external.host) (.Values.redis.external.port) ($databaseName) }}
 {{- else }}
 {{- printf "redis://%s:%s/%s" (include "redis.service.name.external" .) (.Values.redis.external.host) (.Values.redis.external.port) ($databaseName) }}
@@ -107,9 +138,7 @@
 {{- define "redis.connection.webmail" }}
 {{- $databaseName := (include "redis.database.webmail" .) }}
 {{- if .Values.redis.external.enabled }}
-{{- if or (.Values.common.database.redis.webmail.username) (.Values.common.database.redis.webmail.password) }}
-{{- printf "redis://%s:%s@%s:%s/%s" (.Values.common.database.redis.webmail.username) (.Values.common.database.redis.webmail.password) (.Values.redis.external.host) (.Values.redis.external.port) ($databaseName) }}
-{{- else if or (.Values.redis.external.username) (.Values.redis.external.password) }}
+{{- if or (.Values.redis.external.username) (.Values.redis.external.password) }}
 {{- printf "redis://%s:%s@%s:%s/%s" (.Values.redis.external.username) (.Values.redis.external.password) (.Values.redis.external.host) (.Values.redis.external.port) ($databaseName) }}
 {{- else }}
 {{- printf "redis://%s:%s/%s" (include "redis.service.name.external" .) (.Values.redis.external.host) (.Values.redis.external.port) ($databaseName) }}
@@ -126,9 +155,7 @@
 {{- define "redis.connection.rspamd" }}
 {{- $databaseName := (include "redis.database.rspamd" .) }}
 {{- if .Values.redis.external.enabled }}
-{{- if or (.Values.common.database.redis.rspamd.username) (.Values.common.database.redis.rspamd.password) }}
-{{- printf "redis://%s:%s@%s:%s/%s" (.Values.common.database.redis.rspamd.username) (.Values.common.database.redis.rspamd.password) (.Values.redis.external.host) (.Values.redis.external.port) ($databaseName) }}
-{{- else if or (.Values.redis.external.username) (.Values.redis.external.password) }}
+{{- if or (.Values.redis.external.username) (.Values.redis.external.password) }}
 {{- printf "redis://%s:%s@%s:%s/%s" (.Values.redis.external.username) (.Values.redis.external.password) (.Values.redis.external.host) (.Values.redis.external.port) ($databaseName) }}
 {{- else }}
 {{- printf "redis://%s:%s/%s" (include "redis.service.name.external" .) (.Values.redis.external.host) (.Values.redis.external.port) ($databaseName) }}
@@ -145,9 +172,7 @@
 {{- define "redis.connection.zonemta" }}
 {{- $databaseName := (include "redis.database.zonemta" .) }}
 {{- if .Values.redis.external.enabled }}
-{{- if or (index .Values.common.database.redis "zone-mta" "username") (index .Values.common.database.redis "zone-mta" "password") }}
-{{- printf "redis://%s:%s@%s:%s/%s" (index .Values.common.database.redis "zone-mta" "username") (index .Values.common.database.redis "zone-mta" "password") (.Values.redis.external.host) (.Values.redis.external.port) ($databaseName) }}
-{{- else if or (.Values.redis.external.username) (.Values.redis.external.password) }}
+{{- if or (.Values.redis.external.username) (.Values.redis.external.password) }}
 {{- printf "redis://%s:%s@%s:%s/%s" (.Values.redis.external.username) (.Values.redis.external.password) (.Values.redis.external.host) (.Values.redis.external.port) ($databaseName) }}
 {{- else }}
 {{- printf "redis://%s:%s/%s" (include "redis.service.name.external" .) (.Values.redis.external.host) (.Values.redis.external.port) ($databaseName) }}

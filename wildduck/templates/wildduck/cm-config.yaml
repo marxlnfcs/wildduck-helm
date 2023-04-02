@@ -228,7 +228,7 @@ data:
     mongo="{{ include "mongo.connection.wildduck" . }}"
 
     # redis connection string to connect to a single master (see below for Sentinel example)
-    redis="{{ include "redis.connection.wildduck" . }}"
+    #redis="{{ include "redis.connection.wildduck" . }}"
 
     # WildDuck allows using different kind of data in different databases
     # If you do not provide a database config value, then main database connection
@@ -252,10 +252,12 @@ data:
 
     #queued="mail"
 
-    #[redis]
-    #host="127.0.0.1"
-    #port=6379
-    #db=3
+    [redis]
+    host="{{ include "redis.connection.host" . }}"
+    port={{ include "redis.connection.port" . }}
+    db={{ include "redis.connection.database.wildduck" . }}
+    username="{{ include "redis.connection.username" . }}"
+    password="{{ include "redis.connection.password" . }}"
 
     ## Connect to Redis Sentinel instead of single master
     # [redis]
