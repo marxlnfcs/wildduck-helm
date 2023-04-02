@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "{{ printf "%s-plugins" (include "wildduck.name" .) }}"
+  namespace: "{{ .Release.Namespace }}"
+  labels: {{- include "wildduck.labels" . | nindent 4 }}
+  annotations:
+    {{- if .Values.commonAnnotations }}
+    {{ toYaml .Values.commonAnnotations | nindent 4 }}
+    {{- end }}
+data:
+  rspamd.toml: |-
+    ["core/rspamd"]
+        enabled = false # use `true` or `["receiver"]` to enable
+        url = "http://maildev.zone.wtf:11333/check"
+        interfaces = ["maildrop"]
+        ignoreOrigins = []
+        maxSize = 5242880
+        dropSpam = false
+        rewriteSubject = false
+        ip = true

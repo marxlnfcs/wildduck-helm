@@ -71,10 +71,6 @@ common:
         database: "wildduck"
         username: "wildduck"
         password: "sup3r-s3cr3t-password"
-      wildduck_test:
-        database: "wildduck-test"
-        username: "wildduck-test"
-        password: "sup3r-s3cr3t-password"
       webmail:
         database: "webmail"
         username: "webmail"
@@ -86,10 +82,6 @@ common:
     redis:
       wildduck:
         database: 3
-        username: "" # Only used if redis.external.enabled is true
-        password: "sup3r-s3cr3t-password" # Only used if redis.external.enabled is true
-      wildduck_test:
-        database: 13
         username: "" # Only used if redis.external.enabled is true
         password: "sup3r-s3cr3t-password" # Only used if redis.external.enabled is true
       webmail:
