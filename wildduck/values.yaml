@@ -40,10 +40,13 @@ common:
   ##
   baseDomain: "example.com"
 
-  ## @param common.ingressDomain - Should be set if the ingress resources should use a different domain than the baseDomain
-  ## default: {{ .Values.common.baseDomain }}
-  ##
-  ingressDomain: ""
+  ## @param common.apiDomain - Should be set if the ingress resources should use a different domain than the baseDomain
+  ## default: {{ printf "api.%s" (.Values.common.baseDomain) }}
+  apiDomain: ""
+
+  ## @param common.webmailDomain - Should be set if the ingress resources should use a different domain than the baseDomain
+  ## default: {{ printf "webmail.%s" (.Values.common.baseDomain) }}
+  webmailDomain: ""
 
   ## @param common.wildduck - Common wildduck configurations
   ##
@@ -224,7 +227,7 @@ wildduck:
     ##
     pathType: ImplementationSpecific
     ## @param wildduck.ingress.hostname - Default host for the ingress resource
-    ## The default value is api.{{.Values.common.ingressDomain}}
+    ## The default value is api.{{.Values.common.baseDomain}}
     ##
     hostname: ""
     ## @param wildduck.ingress.path - The Path to Nginx. You may need to set this to '/*' in order to use this with ALB ingress controllers.
@@ -304,7 +307,7 @@ webmail:
     ##
     pathType: ImplementationSpecific
     ## @param webmail.ingress.hostname - Default host for the ingress resource
-    ## Default value is webmail.{{.Values.common.ingressDomain}}
+    ## Default value is webmail.{{.Values.common.baseDomain}}
     ##
     hostname: ""
     ## @param webmail.ingress.path - The Path to Nginx. You may need to set this to '/*' in order to use this with ALB ingress controllers.

@@ -36,8 +36,8 @@ app.kubernetes.io/component: wildduck
 {{- define "wildduck.ingress.hostname" }}
 {{- if .Values.wildduck.ingress.hostname }}
     {{- .Values.wildduck.ingress.hostname }}
-{{- else if .Values.common.ingressDomain }}
-    {{- printf "api.%s" (.Values.common.ingressDomain) }}
+{{- else if .Values.common.apiDomain }}
+    {{- printf "%s" (.Values.common.apiDomain) }}
 {{- else }}
     {{- printf "api.%s" (.Values.common.baseDomain) }}
 {{- end }}

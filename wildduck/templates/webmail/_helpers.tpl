@@ -29,8 +29,8 @@ app.kubernetes.io/component: webmail
 {{- define "webmail.ingress.hostname" }}
 {{- if .Values.webmail.ingress.hostname }}
     {{- .Values.webmail.ingress.hostname }}
-{{- else if .Values.common.ingressDomain }}
-    {{- printf "webmail.%s" (.Values.common.ingressDomain) }}
+{{- else if .Values.common.webmailDomain }}
+    {{- printf "%s" (.Values.common.webmailDomain) }}
 {{- else }}
     {{- printf "webmail.%s" (.Values.common.baseDomain) }}
 {{- end }}
