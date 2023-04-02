@@ -210,7 +210,8 @@ wildduck:
   ## @param wildduck.image - Image configuration
   ##
   image:
-    name: nodemailer/wildduck:v1.34.0
+    #name: nodemailer/wildduck:v1.34.0
+    name: nodemailer/wildduck
     pullPolicy: IfNotPresent
 
   ## @param wildduck.service - Service configuration
@@ -368,7 +369,7 @@ zonemta:
   ## @param zonemta.image Image configuration
   ##
   image:
-    name: nodemailer/zonemta-wildduck:latest
+    name: nodemailer/zonemta-wildduck
     pullPolicy: IfNotPresent
 
   ## @param zonemta.service Service configuration
