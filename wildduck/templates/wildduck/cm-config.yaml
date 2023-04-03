@@ -126,19 +126,26 @@ data:
     # idexing worker
     enabled = false
   acme.toml: |-
-    # ACME production settings
-    #key = "production" # variable to identify account settings for specified directory url
-    #directoryUrl = "https://acme-v02.api.letsencrypt.org/directory"
-    #email = "domainadmin@example.com" # must be valid email address
+    {{- if .Values.common.acme.enabled }}
 
-    # ACME development settings
-    #key = "devel" # variable to identify account settings for specified directory url
-    #directoryUrl = "https://acme-staging-v02.api.letsencrypt.org/directory"
-    #email = "domainadmin@example.com" # must be valid email address
+    # ACME settings
+    {{- if eq (default "staging" .Values.common.acme.enabled) "production" }}
+    key = "production" # variable to identify account settings for specified directory url
+    directoryUrl = "https://acme-v02.api.letsencrypt.org/directory"
+    email = "domainadmin@example.com" # must be valid email address
+    {{- else }}
+    key = "devel" # variable to identify account settings for specified directory url
+    directoryUrl = "https://acme-staging-v02.api.letsencrypt.org/directory"
+    email = "domainadmin@example.com" # must be valid email address
+    {{- end }}
 
     # If hostname has a CAA record set then match it against this list
     # CAA check is done before WildDuck tries to request certificate from ACME
+    {{- if .Values.common.acme.caaDomains }}
+    caaDomains = {{ .Values.common.acme.caaDomains | toJson }}
+    {{- else }}
     caaDomains = [ "letsencrypt.org" ]
+    {{- end }}
 
     # Private key settings, if WildDuck has to generate a key by itself
     keyBits = 2048
@@ -150,6 +157,8 @@ data:
         enabled = false
         port = 80 # use 80 in production
         redirect = "https://wildduck.email" # redirect requests unrelated to ACME updates to this URL
+
+    {{- end }}
   api.toml: |-
     enabled = true
     port = 8080
@@ -289,7 +298,7 @@ data:
   imap.toml: |-
     # If enabled then WildDuck exposes an IMAP interface for listing and fetching emails
     enabled=true
-    port=9993
+    port=993
     host="0.0.0.0"
 
     # Use `true` for port 993 and `false` for 143. If connection is not secured
@@ -348,7 +357,7 @@ data:
     hostname="{{ .Values.common.baseDomain }}"
     secure=true
     # port defaults to imap.port
-    port=9993
+    #port=993
 
     [tls]
     ## If certificate path is not defined, use global or built-in self-signed certs
@@ -376,22 +385,22 @@ data:
     # If enabled then WildDuck exposes a LMTP interface for pushing messages to mail store
     # NB! If you are using WildDuck plugin for Haraka then LMTP is not needed
     enabled=false
-    port=2424
+    #port=2424
 
     # by default bind to localhost only
-    host="127.0.0.1"
+    #host="127.0.0.1"
 
     # Max accepted size for messages pushed via LMTP
-    maxMB=25
+    #maxMB=25
 
     # If true then disables STARTTLS usage
-    disableSTARTTLS=true
+    #disableSTARTTLS=true
 
     # Greeting message for connecting client
-    banner="Welcome to WildDuck Mail Server"
+    #banner="Welcome to WildDuck Mail Server"
 
     # Server hostname. Defaults to os.hostname() if false
-    name=false
+    #name=false
 
     [tls]
     # If certificate path is not defined, use global or built-in self-signed certs for STARTTLS
@@ -437,6 +446,7 @@ data:
     hostname="{{ .Values.common.baseDomain }}"
     secure=true
     # port defaults to pop3.port
+    #port=995
   roles.json: |-
     {
       "root": {

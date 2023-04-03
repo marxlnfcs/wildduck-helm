@@ -56,15 +56,12 @@ common:
     ##
     accessToken: ""
 
-  ## @param common.additionalAccounts - Creates all accounts and its domain if not exists
-  ## Example:
-  ##
-  ## additionalAccounts:
-  ##    - domain: "example.com"
-  ##      username: "max.mustermann"
-  ##      password: "chang3m3!"
-  ##
-  additionalAccounts: []
+  ## @param common.acme - Enables automated certificate generation
+  acme:
+    enabled: false
+    stage: "staging" # production or staging
+    issuerEmail: "acme@example.com"
+    caaDomains: [ "letsencrypt.org" ]
 
   ## @param common.databases - Database information for each component
   ## Setting the username and password is optional. If no username or password is used, the default username and password from mongo.* and redis.* will be used.

@@ -14,7 +14,11 @@ metadata:
     {{- end }}
 spec:
   secretName: "{{ include "tls.name.baseDomain" . }}"
+  {{- if or (not .Values.common.apiDomain) (eq .Values.common.baseDomain .Values.common.apiDomain)}}
   dnsNames: ["{{ .Values.common.baseDomain }}"]
+  {{- else}}
+  dnsNames: ["{{ .Values.common.baseDomain }}", "{{ .Values.common.apiDomain }}"]
+  {{- end }}
   issuerRef:
     name: "{{ default "letsencrypt" .Values.tls.certManager.issuer }}"
     kind: "{{ default "Issuer" .Values.tls.certManager.kind }}"
@@ -26,7 +30,7 @@ spec:
 # TLS Self signed certificate from Helm
 ##
 {{- $ca := genCA (printf "%s-ca" (.Values.common.baseDomain | replace "." "-" | trim)) 365 }}
-{{- $cert := genSignedCert (.Values.common.baseDomain) (list) (list) 365 $ca }}
+{{- $cert := genSignedCert (.Values.common.baseDomain) (list) (list .Values.common.apiDomain) 365 $ca }}
 apiVersion: v1
 kind: Secret
 metadata:
@@ -48,7 +52,7 @@ data:
 # Fallback if no secret type is defined (Neither cert-manager, selfSigned nor existingSecretName)
 ##
 {{- $ca := genCA (printf "%s-ca" (.Values.common.baseDomain | replace "." "-" | trim)) 365 }}
-{{- $cert := genSignedCert (.Values.common.baseDomain) (list) (list) 365 $ca }}
+{{- $cert := genSignedCert (.Values.common.baseDomain) (list) (list .Values.common.apiDomain) 365 $ca }}
 apiVersion: v1
 kind: Secret
 metadata:
