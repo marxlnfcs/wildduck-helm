@@ -90,4 +90,4 @@ spec:
             name: "{{ include "wildduck.name" . }}-config"
         - name: tls
           secret:
-            secretName: "{{ include "tls.name.baseDomain" . }}"
+            secretName: "{{ include "domains.mailDomain.tls.secretName" . }}"

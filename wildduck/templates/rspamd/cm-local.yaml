@@ -11,3 +11,13 @@ metadata:
 data:
   worker-normal.inc: |-
     bind_socket = "*:11333";
+
+  {{- if .Values.rspamd.webinterface.enabled }}
+  worker-controller.inc: |-
+    type = "controller";
+    bind_socket = "*:11334";
+    count = 1;
+    password = "{{ .Values.rspamd.webinterface.password }}";
+    enable_password = "{{ .Values.rspamd.webinterface.password_privileged }}";
+    static_dir = "${WWWDIR}";
+  {{- end }}

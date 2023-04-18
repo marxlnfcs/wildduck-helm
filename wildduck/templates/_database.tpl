@@ -73,16 +73,16 @@
 
 
 {{- define "redis.database.wildduck" }}
-{{- printf "%s" (default "3" .Values.common.database.redis.wildduck.database | toString ) }}
+{{- printf "%s" (default "3" .Values.common.database.redis.wildduck | toString ) }}
 {{- end }}
 {{- define "redis.database.webmail" }}
-{{- printf "%s" (default "5" .Values.common.database.redis.webmail.database | toString ) }}
+{{- printf "%s" (default "5" .Values.common.database.redis.webmail | toString ) }}
 {{- end }}
 {{- define "redis.database.rspamd" }}
-{{- printf "%s" (default "4" .Values.common.database.redis.rspamd.database | toString ) }}
+{{- printf "%s" (default "4" .Values.common.database.redis.rspamd | toString ) }}
 {{- end }}
 {{- define "redis.database.zonemta" }}
-{{- printf "%s" (default "2" (index .Values.common.database.redis "zone-mta" "database" | toString) ) }}
+{{- printf "%s" (default "2" (index .Values.common.database.redis "zone-mta" | toString) ) }}
 {{- end }}
 
 {{- define "redis.connection.host" }}

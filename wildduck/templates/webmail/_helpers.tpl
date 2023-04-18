@@ -26,28 +26,10 @@ app.kubernetes.io/component: webmail
 {{ end }}
 {{- end }}
 
-{{- define "webmail.ingress.hostname" }}
-{{- if .Values.webmail.ingress.hostname }}
-    {{- .Values.webmail.ingress.hostname }}
-{{- else if .Values.common.webmailDomain }}
-    {{- printf "%s" (.Values.common.webmailDomain) }}
-{{- else }}
-    {{- printf "webmail.%s" (.Values.common.baseDomain) }}
-{{- end }}
-{{- end }}
-
-{{- define "webmail.ingress.url" }}
+{{- define "webmail.url" }}
 {{- if .Values.webmail.ingress.tls }}
-{{- printf "https://%s" (include "webmail.ingress.hostname" .) }}
+{{- printf "https://%s" (include "domains.webmailDomain" .) }}
 {{- else }}
-{{- printf "http://%s" (include "webmail.ingress.hostname" .) }}
-{{- end }}
-{{- end }}
-
-{{- define "webmail.ingress.tls.secret" }}
-{{- if .Values.webmail.ingress.existingSecretName }}
-{{ .Values.webmail.ingress.existingSecretName }}
-{{- else }}
-{{- include "tls.name.generate" (include "webmail.ingress.hostname" .) }}
+{{- printf "http://%s" (include "domains.webmailDomain" .) }}
 {{- end }}
 {{- end }}

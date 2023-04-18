@@ -1,10 +1,10 @@
 {{- if and (.Values.webmail.enabled) (.Values.webmail.ingress.enabled) (.Values.webmail.ingress.selfSigned) (.Values.webmail.ingress.tls) (not .Values.webmail.ingress.existingSecretName) }}
-{{- $ca := genCA (printf "%s-ca" (include "webmail.ingress.hostname" . | replace "." "-" | trim)) 365 }}
-{{- $cert := genSignedCert (include "webmail.ingress.hostname" .) (list) (list) 365 $ca }}
+{{- $ca := genCA (printf "%s-ca" (include "domains.webmailDomain" . | replace "." "-" | trim)) 365 }}
+{{- $cert := genSignedCert (include "domains.webmailDomain" .) (list) (list) 365 $ca }}
 apiVersion: v1
 kind: Secret
 metadata:
-  name: "{{ include "webmail.ingress.tls.secret" . }}"
+  name: "{{ include "domains.webmailDomain.tls.secretName" . }}"
   namespace: "{{ .Release.Namespace }}"
   labels: {{-  include "common.labels.standard" . | nindent 4 }}
   annotations:

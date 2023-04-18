@@ -67,7 +67,7 @@ data:
     interfaces=["feeder"]
     # optional hostname to be used in headers
     # defaults to os.hostname()
-    hostname="{{ .Values.common.baseDomain }}"
+    hostname="{{ include "domains.mailDomain" . }}"
     # How long to keep auth records in log
     authlogExpireDays=30
     # default smtp recipients for 24h (can be overriden per user)
@@ -83,7 +83,7 @@ data:
         # SRS secret value. Must be the same as in the MX side
         secret="{{ include "secret.srs" . }}"
         # SRS domain, must resolve back to MX
-        rewriteDomain="{{ .Values.common.baseDomain }}"
+        rewriteDomain="{{ include "domains.mailDomain" . }}"
     # DKIM Settings
     # -------------
     ["modules/zonemta-wildduck".dkim]

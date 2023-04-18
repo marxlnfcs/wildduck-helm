@@ -40,13 +40,21 @@ common:
   ##
   baseDomain: "example.com"
 
-  ## @param common.apiDomain - Should be set if the ingress resources should use a different domain than the baseDomain
+  ## @param common.apiDomain - Should be set if the ingress resources should use a different hostname than the baseDomain
   ## default: {{ printf "api.%s" (.Values.common.baseDomain) }}
   apiDomain: ""
+
+  ## @param common.mailDomain - Should be set if the mail server resources should use a different hostname than the baseDomain
+  ## default: {{ printf "mail.%s" (.Values.common.baseDomain) }}
+  mailDomain: ""
 
   ## @param common.webmailDomain - Should be set if the ingress resources should use a different domain than the baseDomain
   ## default: {{ printf "webmail.%s" (.Values.common.baseDomain) }}
   webmailDomain: ""
+
+  ## @param common.rspamdDomain - Should be set if the ingress resources should use a different domain than the baseDomain
+  ## default: {{ printf "rspamd.%s" (.Values.common.baseDomain) }}
+  rspamdDomain: ""
 
   ## @param common.wildduck - Common wildduck configurations
   ##
@@ -80,14 +88,10 @@ common:
         username: "zone-mta"
         password: "sup3r-s3cr3t-password"
     redis:
-      wildduck:
-        database: 3
-      webmail:
-        database: 5
-      rspamd:
-        database: 4
-      zone-mta:
-        database: 2
+      wildduck: 3
+      webmail: 5
+      rspamd: 4
+      zone-mta: 2
 
 ## @param tls - Defines the certificate to use for all deployments
 ## Defines if the chart should automatically create a certificate for every deployment who needs it
@@ -224,7 +228,7 @@ wildduck:
     ##
     pathType: ImplementationSpecific
     ## @param wildduck.ingress.hostname - Default host for the ingress resource
-    ## The default value is api.{{.Values.common.baseDomain}}
+    ## The default value is {{ .Values.common.apiDomain }}
     ##
     hostname: ""
     ## @param wildduck.ingress.path - The Path to Nginx. You may need to set this to '/*' in order to use this with ALB ingress controllers.
@@ -234,14 +238,14 @@ wildduck:
     ## annotations:
     ##    cert-manager.io/cluster-issuer: letsencrypt
     ##
-    annotations: {}
-    ## @param ingress.ingressClassName Set the ingressClassName on the ingress record for k8s 1.18+
+    annotations: { }
+    ## @param wildduck.ingress.ingressClassName Set the ingressClassName on the ingress record for k8s 1.18+
     ## This is supported in Kubernetes 1.18+ and required if you have more than one IngressClass marked as the default for your cluster .
     ## ref: https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/
     ##
-    ingressClassName: ""
-    ## @param ingress.tls Create TLS Secret
-    ## TLS certificates will be retrieved from a TLS secret with name: {{- printf "%s-tls" .Values.wildduck.ingress.hostname }}
+    ingressClassName: "nginx"
+    ## @param wildduck.ingress.tls Create TLS Secret
+    ## TLS certificates will be retrieved from a TLS secret with name: {{- printf "%s-tls" (include "domains.apiDomain.tls.secretName" .) }}
     ## You can use the ingress.secrets parameter to create this TLS secret or relay on cert-manager to create it
     ##
     tls: false
@@ -315,12 +319,12 @@ webmail:
     ##    cert-manager.io/cluster-issuer: letsencrypt
     ##
     annotations: {}
-    ## @param ingress.ingressClassName Set the ingressClassName on the ingress record for k8s 1.18+
+    ## @param webmail.ingress.ingressClassName Set the ingressClassName on the ingress record for k8s 1.18+
     ## This is supported in Kubernetes 1.18+ and required if you have more than one IngressClass marked as the default for your cluster .
     ## ref: https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/
     ##
     ingressClassName: ""
-    ## @param ingress.tls Create TLS Secret
+    ## @param webmail.ingress.tls Create TLS Secret
     ## TLS certificates will be retrieved from a TLS secret with name: {{- printf "%s-tls" .Values.webmail.ingress.hostname }}
     ## You can use the ingress.secrets parameter to create this TLS secret or relay on cert-manager to create it
     ##
@@ -437,7 +441,58 @@ rspamd:
   service:
     name: ""
     type: ClusterIP
-    port: 11333
+    ports:
+      rspamd: 11333
+      http: 80
+
+  ## @param rspamd.webinterface - Webinterface configuration
+  webinterface:
+    ## @param rspamd.webinterface.enabled - Enables the administrative ui
+    enabled: false
+
+    ## @param rspamd.webinterface.password - Password for the webinterface
+    password: ""
+
+    ## @param rspamd.webinterface.password_privileged - Privileged password for the webinterface
+    password_privileged: ""
+
+    ## @param rspamd.webinterface.ingress - Ingress configuration
+    ##
+    ingress:
+      ## @param rspamd.webinterface.ingress.enabled - Set to true to enable ingress record generation
+      ##
+      enabled: true
+      ## @param wildduck.ingress.existingSecretName - Use a existing tls secret for this ingress resource
+      #
+      existingSecretName: ""
+      ## @param rspamd.webinterface.ingress.selfSigned - Create a TLS secret for this ingress record using self-signed certificates generated by helm
+      ##
+      selfSigned: false
+      ## @param rspamd.webinterface.ingress.pathType - Ingress path type
+      ##
+      pathType: ImplementationSpecific
+      ## @param rspamd.webinterface.ingress.hostname - Default host for the ingress resource
+      ## Default value is rspamd.{{.Values.common.baseDomain}}
+      ##
+      hostname: ""
+      ## @param rspamd.webinterface.ingress.path - The Path to Nginx. You may need to set this to '/*' in order to use this with ALB ingress controllers.
+      path: /
+      ## @param rspamd.webinterface.ingress.annotations - Additional annotations for the Ingress resource. To enable certificate autogeneration, place here your cert-manager annotations.
+      ## Example:
+      ## annotations:
+      ##    cert-manager.io/cluster-issuer: letsencrypt
+      ##
+      annotations: {}
+      ## @param rspamd.webinterface.ingress.ingressClassName Set the ingressClassName on the ingress record for k8s 1.18+
+      ## This is supported in Kubernetes 1.18+ and required if you have more than one IngressClass marked as the default for your cluster .
+      ## ref: https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/
+      ##
+      ingressClassName: ""
+      ## @param rspamd.webinterface.ingress.tls Create TLS Secret
+      ## TLS certificates will be retrieved from a TLS secret with name: {{- printf "%s-tls" .Values.rspamd.webinterface.ingress.hostname }}
+      ## You can use the ingress.secrets parameter to create this TLS secret or relay on cert-manager to create it
+      ##
+      tls: false
 
   ## Other configurations
   ##
@@ -516,10 +571,19 @@ mongo:
   podAnnotations: {}
   podSecurityContext: {}
   securityContext: {}
-  resources: {}
   nodeSelector: {}
   tolerations: []
   affinity: {}
+
+  ## Increase resources
+  ##
+  resources:
+    limits:
+      cpu: 600m
+      memory: 500Mi
+    requests:
+      cpu: 500m
+      memory: 500Mi
 
 ## @param redis - Redis configuration
 ##

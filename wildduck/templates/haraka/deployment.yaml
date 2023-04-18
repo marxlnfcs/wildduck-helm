@@ -95,4 +95,4 @@ spec:
             name: "{{ include "haraka.name" . }}-dkim"
         - name: tls
           secret:
-            secretName: "{{ include "tls.name.baseDomain" . }}"
+            secretName: "{{ include "domains.mailDomain.tls.secretName" . }}"

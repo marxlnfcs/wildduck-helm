@@ -23,39 +23,42 @@ data:
 
     stream {
 
-      {{- if .Values.nginx.services.wildduck }}
+      {{- if .Values.nginx.services.imap }}
       upstream backend_imap {
-        server {{ printf "%s:%s" (include "wildduck.service.name.external" .) (default "143" (.Values.wildduck.service.imapPort | toString)) }};
-      }
-      upstream backend_pop3 {
-        server {{ printf "%s:%s" (include "wildduck.service.name.external" .) (default "110" (.Values.wildduck.service.pop3Port | toString)) }};
+        server {{ printf "%s:%s" (include "wildduck.service.name.external" .) (default "143" (.Values.wildduck.service.ports.imap | toString)) }};
       }
       server {
-        listen {{ default "143" (.Values.wildduck.service.imapPort | toString) }};
+        listen {{ default "143" (.Values.wildduck.service.ports.imap | toString) }};
         proxy_pass backend_imap;
       }
+      {{- end }}
+
+      {{- if .Values.nginx.services.pop3 }}
+      upstream backend_pop3 {
+        server {{ printf "%s:%s" (include "wildduck.service.name.external" .) (default "110" (.Values.wildduck.service.ports.pop3 | toString)) }};
+      }
       server {
-        listen {{ default "110" (.Values.wildduck.service.pop3Port | toString) }};
+        listen {{ default "110" (.Values.wildduck.service.ports.pop3 | toString) }};
         proxy_pass backend_pop3;
       }
       {{- end }}
 
-      {{- if .Values.nginx.services.haraka }}
+      {{- if .Values.nginx.services.smtp_inbound }}
       upstream backend_smtp_haraka {
-        server {{ printf "%s:%s" (include "haraka.service.name.external" .) (default "25" (.Values.haraka.service.port | toString)) }};
+        server {{ printf "%s:%s" (include "haraka.service.name.external" .) (default "25" (.Values.haraka.service.ports.smtp | toString)) }};
       }
       server {
-        listen {{ default "25" (.Values.haraka.service.port | toString) }};
+        listen {{ default "25" (.Values.haraka.service.ports.smtp | toString) }};
         proxy_pass backend_smtp_haraka;
       }
       {{- end }}
 
-      {{- if .Values.nginx.services.zonemta }}
+      {{- if .Values.nginx.services.smtp_outbound }}
       upstream backend_smtp_zonemta {
-        server {{ printf "%s:%s" (include "zonemta.service.name.external" .) (default "587" (.Values.zonemta.service.port | toString)) }};
+        server {{ printf "%s:%s" (include "zonemta.service.name.external" .) (default "587" (.Values.zonemta.service.ports.smtp | toString)) }};
       }
       server {
-        listen {{ default "587" (.Values.zonemta.service.port | toString) }};
+        listen {{ default "587" (.Values.zonemta.service.ports.smtp | toString) }};
         proxy_pass backend_smtp_zonemta;
       }
       {{- end }}

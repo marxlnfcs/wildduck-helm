@@ -1,36 +1,35 @@
-{{- if .Values.wildduck.ingress.enabled }}
+{{- if and (.Values.rspamd.webinterface.enabled) (.Values.rspamd.webinterface.ingress.enabled) }}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ include "wildduck.name" . }}
-  labels:
-    {{- include "wildduck.labels" . | nindent 4 }}
+  name: {{ include "rspamd.name" . }}
+  labels: {{- include "rspamd.labels" . | nindent 4 }}
   annotations:
     {{- if .Values.commonAnnotations }}
     {{ toYaml .Values.commonAnnotations | nindent 4 }}
     {{- end }}
-    {{- if .Values.wildduck.ingress.annotations }}
-    {{ toYaml .Values.wildduck.ingress.annotations | nindent 4 }}
+    {{- if .Values.rspamd.webinterface.ingress.annotations }}
+    {{ toYaml .Values.rspamd.webinterface.ingress.annotations | nindent 4 }}
     {{- end }}
 spec:
   {{- if .Values.wildduck.ingress.ingressClassName }}
   ingressClassName: "{{ .Values.wildduck.ingress.ingressClassName }}"
   {{- end }}
   rules:
-    - host: "{{ include "domains.apiDomain" . }}"
+    - host: "{{ include "domains.rspamdDomain" . }}"
       http:
         paths:
           - path: "{{ default "/" .Values.wildduck.ingress.path }}"
             pathType: "{{ default "ImplementationSpecific" .Values.wildduck.ingress.pathType }}"
             backend:
               service:
-                name: "{{ include "wildduck.service.name" . }}"
+                name: "{{ include "rspamd.service.name" . }}"
                 port:
                   name: http
   {{- if .Values.wildduck.ingress.tls }}
   tls:
     - hosts:
-        - "{{ include "domains.apiDomain" . }}"
-      secretName: "{{ include "domains.apiDomain.tls.secretName" . }}"
+        - "{{ include "domains.rspamdDomain" . }}"
+      secretName: "{{ include "domains.rspamdDomain.tls.secretName" . }}"
   {{- end }}
 {{- end }}

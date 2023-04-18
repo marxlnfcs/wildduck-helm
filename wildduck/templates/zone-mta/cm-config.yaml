@@ -65,7 +65,7 @@ data:
     # Server process must be able to locally bind to these addresses
     [[default]]
     address="0.0.0.0"
-    name="{{ .Values.common.baseDomain }}"
+    name="{{ include "domains.mailDomain" . }}"
     #
     #[[default]]
     #address="1.2.3.5"

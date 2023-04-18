@@ -1,10 +1,10 @@
 {{- if and (.Values.wildduck.ingress.enabled) (.Values.wildduck.ingress.selfSigned) (.Values.wildduck.ingress.tls) (not .Values.wildduck.ingress.existingSecretName) }}
-{{- $ca := genCA (printf "%s-ca" (include "wildduck.ingress.hostname" . | replace "." "-" | trim)) 365 }}
-{{- $cert := genSignedCert (include "wildduck.ingress.hostname" .) (list) (list) 365 $ca }}
+{{- $ca := genCA (printf "%s-ca" (include "domains.apiDomain" . | replace "." "-" | trim)) 365 }}
+{{- $cert := genSignedCert (include "domains.apiDomain" .) (list) (list) 365 $ca }}
 apiVersion: v1
 kind: Secret
 metadata:
-  name: "{{ include "wildduck.ingress.tls.secret" . }}"
+  name: "{{ include "domains.apiDomain.tls.secretName" . }}"
   namespace: "{{ .Release.Namespace }}"
   labels: {{-  include "common.labels.standard" . | nindent 4 }}
   annotations:

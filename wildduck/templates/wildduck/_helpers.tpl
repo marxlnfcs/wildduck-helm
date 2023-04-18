@@ -33,28 +33,10 @@ app.kubernetes.io/component: wildduck
 {{ end }}
 {{- end }}
 
-{{- define "wildduck.ingress.hostname" }}
-{{- if .Values.wildduck.ingress.hostname }}
-    {{- .Values.wildduck.ingress.hostname }}
-{{- else if .Values.common.apiDomain }}
-    {{- printf "%s" (.Values.common.apiDomain) }}
+{{- define "wildduck.url" }}
+{{- if .Values.webmail.ingress.tls }}
+{{- printf "https://%s" (include "domains.apiDomain" .) }}
 {{- else }}
-    {{- printf "api.%s" (.Values.common.baseDomain) }}
-{{- end }}
-{{- end }}
-
-{{- define "wildduck.ingress.url" }}
-{{- if .Values.wildduck.ingress.tls }}
-{{- printf "https://%s" (include "wildduck.ingress.hostname" .) }}
-{{- else }}
-{{- printf "http://%s" (include "wildduck.ingress.hostname" .) }}
-{{- end }}
-{{- end }}
-
-{{- define "wildduck.ingress.tls.secret" }}
-{{- if .Values.wildduck.ingress.existingSecretName }}
-{{ .Values.wildduck.ingress.existingSecretName }}
-{{- else }}
-{{- include "tls.name.generate" (include "wildduck.ingress.hostname" .) }}
+{{- printf "http://%s" (include "domains.apiDomain" .) }}
 {{- end }}
 {{- end }}

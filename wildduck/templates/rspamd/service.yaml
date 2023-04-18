@@ -11,8 +11,12 @@ metadata:
 spec:
   type: {{ .Values.rspamd.service.type }}
   ports:
-    - port: {{ .Values.rspamd.service.port | int }}
+    - port: {{ .Values.rspamd.service.ports.rspamd | int }}
       targetPort: rspamd
       protocol: TCP
       name: rspamd
+    - port: {{ .Values.rspamd.service.ports.http | int }}
+      targetPort: http
+      protocol: TCP
+      name: http
   selector: {{- include "rspamd.labels" . | nindent 4 }}

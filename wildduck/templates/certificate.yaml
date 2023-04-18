@@ -5,7 +5,7 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: "{{ include "tls.name.baseDomain" . }}"
+  name: "{{ include "domains.mailDomain.tls.secretName" . }}"
   namespace: "{{ .Release.Namespace }}"
   labels: {{-  include "common.labels.standard" . | nindent 4 }}
   annotations:
@@ -13,12 +13,8 @@ metadata:
     {{ toYaml .Values.commonAnnotations | nindent 4 }}
     {{- end }}
 spec:
-  secretName: "{{ include "tls.name.baseDomain" . }}"
-  {{- if or (not .Values.common.apiDomain) (eq .Values.common.baseDomain .Values.common.apiDomain)}}
-  dnsNames: ["{{ .Values.common.baseDomain }}"]
-  {{- else}}
-  dnsNames: ["{{ .Values.common.baseDomain }}", "{{ .Values.common.apiDomain }}"]
-  {{- end }}
+  secretName: "{{ include "domains.mailDomain.tls.secretName" . }}"
+  dnsNames: ["{{ include "domains.mailDomain" . }}"]
   issuerRef:
     name: "{{ default "letsencrypt" .Values.tls.certManager.issuer }}"
     kind: "{{ default "Issuer" .Values.tls.certManager.kind }}"
@@ -29,12 +25,12 @@ spec:
 ##
 # TLS Self signed certificate from Helm
 ##
-{{- $ca := genCA (printf "%s-ca" (.Values.common.baseDomain | replace "." "-" | trim)) 365 }}
-{{- $cert := genSignedCert (.Values.common.baseDomain) (list) (list .Values.common.apiDomain) 365 $ca }}
+{{- $ca := genCA (printf "%s-ca" ((include "domains.mailDomain" .) | replace "." "-" | trim)) 365 }}
+{{- $cert := genSignedCert (include "domains.mailDomain" .) (list) (list) 365 $ca }}
 apiVersion: v1
 kind: Secret
 metadata:
-  name: "{{ include "tls.name.baseDomain" . }}"
+  name: "{{ include "domains.mailDomain.tls.secretName" . }}"
   namespace: "{{ .Release.Namespace }}"
   labels: {{-  include "common.labels.standard" . | nindent 4 }}
   annotations:
@@ -51,12 +47,12 @@ data:
 # TLS Self signed certificate from Helm
 # Fallback if no secret type is defined (Neither cert-manager, selfSigned nor existingSecretName)
 ##
-{{- $ca := genCA (printf "%s-ca" (.Values.common.baseDomain | replace "." "-" | trim)) 365 }}
-{{- $cert := genSignedCert (.Values.common.baseDomain) (list) (list .Values.common.apiDomain) 365 $ca }}
+{{- $ca := genCA (printf "%s-ca" ((include "domains.mailDomain" .) | replace "." "-" | trim)) 365 }}
+{{- $cert := genSignedCert (include "domains.mailDomain" .) (list) (list) 365 $ca }}
 apiVersion: v1
 kind: Secret
 metadata:
-  name: "{{ include "tls.name.baseDomain" . }}"
+  name: "{{ include "domains.mailDomain.tls.secretName" . }}"
   namespace: "{{ .Release.Namespace }}"
   labels: {{-  include "common.labels.standard" . | nindent 4 }}
   annotations:

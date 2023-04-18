@@ -17,7 +17,7 @@ spec:
   ingressClassName: "{{ .Values.webmail.ingress.ingressClassName }}"
   {{- end }}
   rules:
-    - host: "{{ include "webmail.ingress.hostname" . }}"
+    - host: "{{ include "domains.webmailDomain" . }}"
       http:
         paths:
           - path: "{{ default "/" .Values.webmail.ingress.path }}"
@@ -30,7 +30,7 @@ spec:
   {{- if .Values.webmail.ingress.tls }}
   tls:
     - hosts:
-        - "{{ include "webmail.ingress.hostname" . }}"
-      secretName: "{{ include "webmail.ingress.tls.secret" . }}"
+        - "{{ include "domains.webmailDomain" . }}"
+      secretName: "{{ include "domains.webmailDomain.tls.secretName" . }}"
   {{- end }}
 {{- end }}

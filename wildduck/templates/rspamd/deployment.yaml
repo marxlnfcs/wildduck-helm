@@ -55,6 +55,11 @@ spec:
             - name: rspamd
               containerPort: 11333
               protocol: TCP
+            {{- if .Values.rspamd.webinterface.enabled }}
+            - name: http
+              containerPort: 11334
+              protocol: TCP
+            {{- end }}
           startupProbe:
             tcpSocket:
               port: rspamd

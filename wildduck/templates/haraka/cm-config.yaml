@@ -382,7 +382,7 @@ data:
   dkim_sign.ini: |-
     disabled = true
     selector = mail
-    domain = {{ .Values.common.baseDomain }}
+    domain = {{ include "domains.mailDomain" . }}
     headers_to_sign = From, Sender, Reply-To, Subject, Date, Message-ID, To, Cc, MIME-Version
   dnsbl.ini: |-
     ; reject: (default: true)
