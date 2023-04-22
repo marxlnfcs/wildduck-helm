@@ -425,7 +425,6 @@ haraka:
 ## @param rspamd - Rspamd configuration
 ##
 rspamd:
-
   ## @param rspamd.replicaCount - Replicas to deploy
   ##
   replicaCount: 1
@@ -548,6 +547,12 @@ mongo:
   ##
   username: "wildduck"
   password: "sup3r-s3cr3t-password"
+
+  ## @param mongo.image - Image configuration
+  ##
+  image:
+    name: bitnami/mongodb
+    pullPolicy: IfNotPresent
 
   ## @param mongo.persistence - Persistence configuration
   ##

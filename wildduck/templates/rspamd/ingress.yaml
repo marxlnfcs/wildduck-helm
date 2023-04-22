@@ -12,21 +12,21 @@ metadata:
     {{ toYaml .Values.rspamd.webinterface.ingress.annotations | nindent 4 }}
     {{- end }}
 spec:
-  {{- if .Values.wildduck.ingress.ingressClassName }}
-  ingressClassName: "{{ .Values.wildduck.ingress.ingressClassName }}"
+  {{- if .Values.rspamd.webinterface.ingress.ingressClassName }}
+  ingressClassName: "{{ .Values.rspamd.webinterface.ingress.ingressClassName }}"
   {{- end }}
   rules:
     - host: "{{ include "domains.rspamdDomain" . }}"
       http:
         paths:
-          - path: "{{ default "/" .Values.wildduck.ingress.path }}"
-            pathType: "{{ default "ImplementationSpecific" .Values.wildduck.ingress.pathType }}"
+          - path: "{{ default "/" .Values.rspamd.webinterface.ingress.path }}"
+            pathType: "{{ default "ImplementationSpecific" .Values.rspamd.webinterface.ingress.pathType }}"
             backend:
               service:
                 name: "{{ include "rspamd.service.name" . }}"
                 port:
                   name: http
-  {{- if .Values.wildduck.ingress.tls }}
+  {{- if .Values.rspamd.webinterface.ingress.tls }}
   tls:
     - hosts:
         - "{{ include "domains.rspamdDomain" . }}"

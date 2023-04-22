@@ -46,8 +46,8 @@ spec:
 
       containers:
         - name: mongo
-          image: "bitnami/mongodb"
-          imagePullPolicy: IfNotPresent
+          image: "{{ .Values.mongo.image.name }}"
+          imagePullPolicy: {{ .Values.mongo.image.pullPolicy }}
           securityContext:
             {{- toYaml .Values.mongo.securityContext | nindent 12 }}
           envFrom:
