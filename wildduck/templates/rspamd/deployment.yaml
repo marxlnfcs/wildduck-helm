@@ -45,6 +45,18 @@ spec:
       tolerations:
          {{- toYaml . | nindent 8 }}
       {{- end }}
+
+      initContainers:
+        - name: wait-for-redis
+          image: {{ .Values.global.waitForTCPDependency.image.name }}
+          command: {{ .Values.global.waitForTCPDependency.image.command | toYaml | nindent 12  }}
+          args: {{ .Values.global.waitForTCPDependency.image.args | toYaml | nindent 12  }}
+          env:
+            - name: HOST
+              value: "{{ include "redis.connection.host" . }}"
+            - name: PORT
+              value: "{{ include "redis.connection.port" . }}"
+
       containers:
         - name: rspamd
           securityContext:

@@ -13,6 +13,17 @@ global:
   imagePullSecrets: []
   storageClass: ""
 
+  ## @param global.waitForTCPDependency - Gets added as an init container to all containers
+  ##
+  waitForTCPDependency:
+    image:
+      name: ghcr.io/patrickdappollonio/wait-for:latest
+      pullPolicy: IfNotPresent
+      #command: ["/usr/bin/nc", "-v", "localhost", "80"]
+      #command: ["/bin/sh", "-c", "while ! /usr/bin/nc ${HOST:=localhost} ${PORT:=22}; do echo 'Waiting for tcp port ${HOST:=localhost}:${PORT:=22}...' && sleep 10; done;"]
+      command: ["/wait-for"]
+      args: ["--host=\"$(HOST):$(PORT)\"", "--verbose", "--every 10s", "--timeout", "10m"]
+
 ##
 ## @section Common parameters
 ##

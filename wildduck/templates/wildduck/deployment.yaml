@@ -45,6 +45,30 @@ spec:
       tolerations:
          {{- toYaml . | nindent 8 }}
       {{- end }}
+
+      initContainers:
+        - name: wait-for-mongo
+          image: {{ .Values.global.waitForTCPDependency.image.name }}
+          imagePullPolicy: {{ .Values.global.waitForTCPDependency.image.pullPolicy }}
+          command: {{ .Values.global.waitForTCPDependency.image.command | toYaml | nindent 12  }}
+          args: {{ .Values.global.waitForTCPDependency.image.args | toYaml | nindent 12  }}
+          env:
+            - name: HOST
+              value: "{{ include "mongo.connection.host" . }}"
+            - name: PORT
+              value: "{{ include "mongo.connection.port" . }}"
+
+        - name: wait-for-redis
+          image: {{ .Values.global.waitForTCPDependency.image.name }}
+          imagePullPolicy: {{ .Values.global.waitForTCPDependency.image.pullPolicy }}
+          command: {{ .Values.global.waitForTCPDependency.image.command | toYaml | nindent 12  }}
+          args: {{ .Values.global.waitForTCPDependency.image.args | toYaml | nindent 12  }}
+          env:
+            - name: HOST
+              value: "{{ include "redis.connection.host" . }}"
+            - name: PORT
+              value: "{{ include "redis.connection.port" . }}"
+
       containers:
         - name: wildduck
           securityContext:

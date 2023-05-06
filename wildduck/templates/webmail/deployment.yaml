@@ -46,6 +46,19 @@ spec:
       tolerations:
          {{- toYaml . | nindent 8 }}
       {{- end }}
+
+      initContainers:
+        - name: wait-for-wildduck
+          image: {{ .Values.global.waitForTCPDependency.image.name }}
+          imagePullPolicy: {{ .Values.global.waitForTCPDependency.image.pullPolicy }}
+          command: {{ .Values.global.waitForTCPDependency.image.command | toYaml | nindent 12  }}
+          args: {{ .Values.global.waitForTCPDependency.image.args | toYaml | nindent 12  }}
+          env:
+            - name: HOST
+              value: "{{ include "wildduck.service.name.external" . }}"
+            - name: PORT
+              value: "{{ .Values.wildduck.service.ports.http }}"
+
       containers:
         - name: webmail
           securityContext:

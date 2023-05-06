@@ -8,6 +8,23 @@
 {{- printf "%s" (default "wildduck" (index .Values.common.database.mongo "zone-mta" "database") ) }}
 {{- end }}
 
+{{- define "mongo.connection.host" }}
+{{- if .Values.mongo.external.enabled }}
+{{- printf "%s" (.Values.mongo.external.host) }}
+{{- else }}
+{{- printf "%s" (include "mongo.service.name.external" .) }}
+{{- end }}
+{{- end }}
+
+{{- define "mongo.connection.port" }}
+{{- if .Values.mongo.external.enabled }}
+{{- printf "%s" (.Values.mongo.external.port | toString) }}
+{{- else }}
+{{- printf "%s" (.Values.mongo.service.port | toString) }}
+{{- end }}
+{{- end }}
+
+
 {{- define "mongo.connection.wildduck" }}
 {{- $databaseName := (include "mongo.database.wildduck" .) }}
 {{- if .Values.mongo.external.enabled }}
