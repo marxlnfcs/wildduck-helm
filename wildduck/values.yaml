@@ -19,10 +19,8 @@ global:
     image:
       name: ghcr.io/patrickdappollonio/wait-for:latest
       pullPolicy: IfNotPresent
-      #command: ["/usr/bin/nc", "-v", "localhost", "80"]
-      #command: ["/bin/sh", "-c", "while ! /usr/bin/nc ${HOST:=localhost} ${PORT:=22}; do echo 'Waiting for tcp port ${HOST:=localhost}:${PORT:=22}...' && sleep 10; done;"]
       command: ["/wait-for"]
-      args: ["--host=\"$(HOST):$(PORT)\"", "--verbose", "--every 10s", "--timeout", "10m"]
+      args: ["--host=\"$(HOST):$(PORT)\"", "--verbose", "--every", "10s", "--timeout", "10m"]
 
 ##
 ## @section Common parameters
@@ -125,6 +123,22 @@ nginx:
     smtp_inbound: true # Haraka (Inbound SMTP)
     imap: true # Wildduck (IMAP)
     pop3: true # Wildduck (POP3)
+
+  ## Other configurations
+  ##
+  podAnnotations: { }
+  podSecurityContext: { }
+  securityContext: { }
+  resources: { }
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 100
+    targetCPUUtilizationPercentage: 80
+    targetMemoryUtilizationPercentage: 80
+  nodeSelector: { }
+  tolerations: [ ]
+  affinity: { }
 
   ## @param nginx.image - Image configuration
   ##
