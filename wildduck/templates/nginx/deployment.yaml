@@ -18,8 +18,8 @@ spec:
       labels: {{- include "nginx.labels" . | nindent 8 }}
       annotations:
         checksum/cm-config: "{{ include (print $.Template.BasePath "/nginx/cm-config.yaml") . | sha256sum }}"
-        {{- if .Values.wildduck.podAnnotations }}
-        {{ toYaml .Values.wildduck.podAnnotations | nindent 8 }}
+        {{- if .Values.nginx.podAnnotations }}
+        {{ toYaml .Values.nginx.podAnnotations | nindent 8 }}
         {{- end }}
         {{- if .Values.commonAnnotations }}
         {{ toYaml .Values.commonAnnotations | nindent 8 }}
@@ -33,16 +33,16 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       securityContext:
-        {{- toYaml .Values.redis.podSecurityContext | nindent 8 }}
-      {{- with .Values.redis.nodeSelector }}
+        {{- toYaml .Values.nginx.podSecurityContext | nindent 8 }}
+      {{- with .Values.nginx.nodeSelector }}
       nodeSelector:
          {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.redis.affinity }}
+      {{- with .Values.nginx.affinity }}
       affinity:
          {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.redis.tolerations }}
+      {{- with .Values.nginx.tolerations }}
       tolerations:
          {{- toYaml . | nindent 8 }}
       {{- end }}
@@ -52,7 +52,7 @@ spec:
           image: "{{ .Values.nginx.image.name }}"
           imagePullPolicy: {{ .Values.nginx.image.pullPolicy }}
           securityContext:
-            {{- toYaml .Values.redis.securityContext | nindent 12 }}
+            {{- toYaml .Values.nginx.securityContext | nindent 12 }}
           ports:
             {{- if .Values.nginx.services.imap }}
             - name: imap
@@ -79,7 +79,7 @@ spec:
               protocol: TCP
             {{- end }}
           resources:
-            {{- toYaml .Values.redis.resources | nindent 12 }}
+            {{- toYaml .Values.nginx.resources | nindent 12 }}
           volumeMounts:
             - name: config
               mountPath: /etc/nginx/nginx.conf
